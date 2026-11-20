@@ -331,14 +331,16 @@
 </head>
 <body>
 <!-- ============================================================
-     跳出内嵌浏览器补丁（独立片段，通用版 v3，注入到 <body> 之后）
+     跳出内嵌浏览器补丁（独立片段，通用版 v5，注入到 <body> 之后）
      作用：FB / IG / TG / 微信 / 抖音 等 APP 内置浏览器里打开本页时，
            自动（Android）或一键（iOS）跳到系统浏览器。
      路由：自动携带当前完整 hash，落地后还原。不假设站内路由格式。
+     语言：按手机语言自动切换（英文 / 简体 / 繁体）。
      关闭：地址后加 ?stay=1
      强制：地址后加 ?go=1  —— 投放链接专用，移动端不看 UA 一律尝试跳出
-     v3 变更：Telegram 注入对象检测（UA 不可靠）；?go=1 强制模式；
-              iOS 点击未跳走时自动提示/回退；Telegram 侧给最快的兜底时间。
+     v3：Telegram 注入对象检测（UA 不可靠）+ ?go=1 强制模式
+     v4：iOS 改用系统级 scheme（shortcuts:// 优先，googlechromes:// 兜底）
+     v5：整套文案 i18n，按 navigator.language 自动选择
      ============================================================ -->
 <style id="xb-style">
 #xb{position:fixed;inset:0;z-index:2147483647;display:none;background:rgba(8,8,12,.97);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#f2f2f7;align-items:center;justify-content:center;padding:22px;box-sizing:border-box}
@@ -362,16 +364,16 @@
 <div id="xb" role="dialog" aria-modal="true" aria-labelledby="xb-t">
   <div class="box">
     <div class="ico">↗</div>
-    <h3 id="xb-t">请用系统浏览器打开</h3>
-    <p>你正在 <b id="xb-app">应用</b> 的内置浏览器中，部分按钮与内容无法正常使用。用系统浏览器打开可以获得完整体验。</p>
-    <a class="cta" id="xb-cta" href="#" rel="noopener">在浏览器中打开</a>
-    <a class="alt" id="xb-alt" href="#" rel="noopener">换一个浏览器打开</a>
+    <h3 id="xb-t">Open in your browser</h3>
+    <p id="xb-body">You are viewing this page inside an app's in-app browser. Open it in your system browser for the full experience.</p>
+    <a class="cta" id="xb-cta" href="#" rel="noopener">Open in browser</a>
+    <a class="alt" id="xb-alt" href="#" rel="noopener">Open in Chrome</a>
     <div class="row">
-      <button id="xb-copy" type="button">复制链接</button>
-      <button id="xb-close" type="button">关闭</button>
+      <button id="xb-copy" type="button">Copy link</button>
+      <button id="xb-close" type="button">Close</button>
     </div>
     <div class="steps" id="xb-steps"></div>
-    <button class="skip" id="xb-skip" type="button">继续在应用内浏览</button>
+    <button class="skip" id="xb-skip" type="button">Continue in this app</button>
   </div>
 </div>
 <script>
@@ -382,12 +384,109 @@
   var isAndroid = /Android/i.test(ua);
   var isMobile = isIOS || isAndroid;
 
+  /* ---------- 0. 语言：跟随手机系统语言 ---------- */
+  var rawLang = '';
+  try {
+    rawLang = (navigator.languages && navigator.languages[0]) || navigator.language ||
+      navigator.userLanguage || navigator.browserLanguage || '';
+  } catch (e) { rawLang = ''; }
+  rawLang = String(rawLang).toLowerCase();
+  var LANG = 'en';
+  if (rawLang.indexOf('zh') === 0) {
+    LANG = /hant|-tw|-hk|-mo|-cht/.test(rawLang) ? 'zht' : 'zh';
+  }
+
+  var STR = {
+    en: {
+      title: 'Open in your browser',
+      body1: 'You are viewing this page inside the in-app browser of ',
+      body2: '. Some buttons and content may not work properly. Open it in your system browser for the full experience.',
+      self: 'this app',
+      safari: 'Open in Safari',
+      safariShortcut: 'Open in Safari',
+      chrome: 'Open in Chrome',
+      def: 'Open in default browser',
+      open: 'Open link',
+      copy: 'Copy link',
+      copied: 'Copied',
+      close: 'Close',
+      skip: 'Continue in this app',
+      fbIos: 'If the button does nothing: tap <i>⋯</i> or <i>Share</i> → <i>Open in Safari</i>.',
+      fbAndroid: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>.',
+      ig: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>.',
+      tgIos: 'No shortcut or Chrome installed? Tap <i>⋯</i> (top right) in Telegram → <i>Open in Safari</i>, or tap <i>Copy link</i> below and paste it into Safari.',
+      tgAndroid: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>, or tap <i>Copy link</i> below and paste it into your browser.',
+      block: 'This app blocks direct jumps: tap <i>⋯</i> → <i>Copy link</i>, then paste it into your browser.',
+      genericIos: 'If the button does nothing: tap <i>⋯</i> → <i>Open in Safari</i>, or copy the link into Safari.',
+      genericAndroid: 'If the button does nothing: use <i>⋯</i> → <i>Open in browser</i>, or copy the link into your browser.',
+      desktop: 'Copy the link and open it in your browser.',
+      already: 'You are already in a browser — you can browse directly.',
+      retryIos: 'Nothing happened. Tap <i>Copy link</i> below and paste it into Safari.',
+      retryAndroid: 'Nothing happened. Tap <i>⋯</i> → <i>Open in browser</i>, or tap <i>Copy link</i> below.'
+    },
+    zh: {
+      title: '请用系统浏览器打开',
+      body1: '你正在 ',
+      body2: ' 的内置浏览器中，部分按钮与内容可能无法正常使用。用系统浏览器打开可以获得完整体验。',
+      self: '应用',
+      safari: '在 Safari 中打开',
+      safariShortcut: '用 Safari 打开',
+      chrome: '用 Chrome 打开',
+      def: '在默认浏览器中打开',
+      open: '打开链接',
+      copy: '复制链接',
+      copied: '已复制',
+      close: '关闭',
+      skip: '继续在应用内浏览',
+      fbIos: '按钮没反应：点 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中打开</i>。',
+      fbAndroid: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>。',
+      ig: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>。',
+      tgIos: '按钮没反应说明没装「OpenInSafari」快捷指令、也没装 Chrome。点 Telegram 右上角 <i>⋯</i> → <i>在 Safari 中打开</i>，或点下方「复制链接」粘到 Safari。',
+      tgAndroid: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>，或点下方「复制链接」粘到浏览器。',
+      block: '该应用会拦截直接跳转：点 <i>⋯</i> → <i>复制链接</i>，再打开浏览器粘贴访问。',
+      genericIos: '按钮没反应：点 <i>⋯</i> → <i>在 Safari 中打开</i>，或复制链接到 Safari 粘贴。',
+      genericAndroid: '按钮没反应：用 <i>⋯</i> 菜单选择「在浏览器中打开」，或复制链接到浏览器粘贴。',
+      desktop: '复制链接到浏览器打开即可。',
+      already: '你已经在浏览器中，可直接浏览。',
+      retryIos: '没有自动跳转。点下方「复制链接」，粘到 Safari 地址栏打开。',
+      retryAndroid: '没有自动跳转。点 <i>⋯</i> → <i>在浏览器中打开</i>，或点下方「复制链接」。'
+    },
+    zht: {
+      title: '請用系統瀏覽器開啟',
+      body1: '你正在 ',
+      body2: ' 的內建瀏覽器中，部分按鈕與內容可能無法正常使用。用系統瀏覽器開啟可獲得完整體驗。',
+      self: '應用程式',
+      safari: '在 Safari 中開啟',
+      safariShortcut: '用 Safari 開啟',
+      chrome: '用 Chrome 開啟',
+      def: '在預設瀏覽器中開啟',
+      open: '開啟連結',
+      copy: '複製連結',
+      copied: '已複製',
+      close: '關閉',
+      skip: '繼續在應用程式內瀏覽',
+      fbIos: '按鈕沒反應：點 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中開啟</i>。',
+      fbAndroid: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>。',
+      ig: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>。',
+      tgIos: '按鈕沒反應代表沒裝「OpenInSafari」捷徑、也沒裝 Chrome。點 Telegram 右上角 <i>⋯</i> → <i>在 Safari 中開啟</i>，或點下方「複製連結」貼到 Safari。',
+      tgAndroid: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>，或點下方「複製連結」貼到瀏覽器。',
+      block: '此應用程式會攔截直接跳轉：點 <i>⋯</i> → <i>複製連結</i>，再開啟瀏覽器貼上。',
+      genericIos: '按鈕沒反應：點 <i>⋯</i> → <i>在 Safari 中開啟</i>，或複製連結到 Safari 貼上。',
+      genericAndroid: '按鈕沒反應：用 <i>⋯</i> 選單選擇「在瀏覽器中開啟」，或複製連結到瀏覽器貼上。',
+      desktop: '複製連結到瀏覽器開啟即可。',
+      already: '你已經在瀏覽器中，可直接瀏覽。',
+      retryIos: '沒有自動跳轉。點下方「複製連結」，貼到 Safari 網址列開啟。',
+      retryAndroid: '沒有自動跳轉。點 <i>⋯</i> → <i>在瀏覽器中開啟</i>，或點下方「複製連結」。'
+    }
+  };
+  var L = STR[LANG] || STR.en;
+
   /* ---------- 1. 回程还原：?r=1&h=<编码后的完整hash> -> 原始地址 ---------- */
   try {
     var qs = new URLSearchParams(location.search);
     if (qs.get('r') === '1') {
-      var h = qs.get('h') || '';
-      var clean = location.pathname + (h ? '#' + decodeURIComponent(h) : '');
+      var h0 = qs.get('h') || '';
+      var clean = location.pathname + (h0 ? '#' + decodeURIComponent(h0) : '');
       try { history.replaceState(null, '', clean); } catch (e) { location.replace(clean); }
     }
   } catch (e) {}
@@ -397,13 +496,13 @@
   if (/FBAN|FBAV|FB_IAB|FB4A|FBIOS|\[FB/i.test(ua)) { APP = 'fb'; NAME = 'Facebook'; }
   else if (/Instagram/i.test(ua)) { APP = 'ig'; NAME = 'Instagram'; }
   else if (/Telegram|TelegramBot/i.test(ua)) { APP = 'tg'; NAME = 'Telegram'; }
-  else if (/MicroMessenger/i.test(ua)) { APP = 'wx'; NAME = '微信'; }
+  else if (/MicroMessenger/i.test(ua)) { APP = 'wx'; NAME = 'WeChat'; }
   else if (/QQ\//i.test(ua) || /QQBrowser/i.test(ua)) { APP = 'qq'; NAME = 'QQ'; }
-  else if (/BytedanceWebview|aweme|TikTok|musical_ly/i.test(ua)) { APP = 'tt'; NAME = '抖音 / TikTok'; }
+  else if (/BytedanceWebview|aweme|TikTok|musical_ly/i.test(ua)) { APP = 'tt'; NAME = 'TikTok'; }
   else if (/Line\//i.test(ua)) { APP = 'line'; NAME = 'LINE'; }
   else if (/Twitter/i.test(ua)) { APP = 'tw'; NAME = 'X'; }
-  else if (/Weibo/i.test(ua)) { APP = 'wb'; NAME = '微博'; }
-  else if (/; wv\)/i.test(ua)) { APP = 'wv'; NAME = '应用'; }
+  else if (/Weibo/i.test(ua)) { APP = 'wb'; NAME = 'Weibo'; }
+  else if (/; wv\)/i.test(ua)) { APP = 'wv'; NAME = L.self; }
 
   /* Telegram 的 UA 和普通浏览器一模一样（iOS 更是等于 Safari），
      只能靠它注入的全局对象判断，且仅 Android 的自家 WebView 会注入。 */
@@ -418,7 +517,7 @@
   /* ---------- 3. 强制模式：投放链接带 ?go=1，移动端不看 UA 直接按内置浏览器处理 ---------- */
   var forcedStay = /[?&]stay=1/.test(location.search);
   var FORCE = /[?&](go|bounce)=1/.test(location.search);
-  if (FORCE && isMobile && !APP) { APP = 'auto'; NAME = ''; }
+  if (FORCE && isMobile && !APP) { APP = 'auto'; NAME = L.self; }
 
   var INAPP = !!APP;
 
@@ -435,7 +534,7 @@
   var safariURI = function (u) { return 'x-safari-https://' + bare(u); };
   var chromeIOSURI = function (u) { return 'googlechromes://' + bare(u); };
   /* Telegram iOS 用的是 SFSafariViewController，x-safari-https 会被忽略；
-     只有「系统级 scheme」能跳出：先 shortcuts://（装了 OpenInSafari 快捷指令），
+     只有系统级 scheme 能跳出：先 shortcuts://（装了 OpenInSafari 快捷指令），
      再 googlechromes://（装了 Chrome），两者都无解时退回手动菜单。 */
   var shortcutsURI = function (u) {
     return 'shortcuts://run-shortcut?name=' + encodeURIComponent('OpenInSafari') +
@@ -454,65 +553,60 @@
   var cta = document.getElementById('xb-cta');
   var alt = document.getElementById('xb-alt');
   var steps = document.getElementById('xb-steps');
-  var appLbl = document.getElementById('xb-app');
+  var titleEl = document.getElementById('xb-t');
+  var bodyEl = document.getElementById('xb-body');
+  var copyBtn = document.getElementById('xb-copy');
+  var closeBtn = document.getElementById('xb-close');
+  var skipBtn = document.getElementById('xb-skip');
   if (!box || !cta) return;
+
+  /* 文案（跟随系统语言） */
+  if (titleEl) titleEl.textContent = L.title;
+  if (bodyEl) bodyEl.innerHTML = L.body1 + '<b>' + (NAME || L.self) + '</b>' + L.body2;
+  if (copyBtn) copyBtn.textContent = L.copy;
+  if (closeBtn) closeBtn.textContent = L.close;
+  if (skipBtn) skipBtn.textContent = L.skip;
+  try { box.setAttribute('lang', LANG === 'en' ? 'en' : (LANG === 'zht' ? 'zh-Hant' : 'zh-Hans')); } catch (e) {}
 
   function paint() {
     var t = targetURL();
     if (isIOS) {
-      if (APP === 'tg') {
+      if (APP === 'tg' || APP === 'auto') {
         cta.href = shortcutsURI(t);
-        cta.textContent = '用 Safari 打开';
+        cta.textContent = L.safariShortcut;
         alt.href = chromeIOSURI(t);
-        alt.textContent = '用 Chrome 打开';
+        alt.textContent = L.chrome;
       } else {
         cta.href = safariURI(t);
-        cta.textContent = '在 Safari 中打开';
+        cta.textContent = L.safari;
         alt.href = chromeIOSURI(t);
-        alt.textContent = '用 Chrome 打开';
+        alt.textContent = L.chrome;
       }
       alt.style.display = '';
     } else if (isAndroid) {
       cta.href = intentURI(t, '');
-      cta.textContent = '在默认浏览器中打开';
+      cta.textContent = L.def;
       alt.href = intentURI(t, 'com.android.chrome');
-      alt.textContent = '用 Chrome 打开';
+      alt.textContent = L.chrome;
       alt.style.display = '';
     } else {
       cta.href = t;
-      cta.textContent = '打开链接';
+      cta.textContent = L.open;
       alt.style.display = 'none';
     }
-    if (appLbl) appLbl.textContent = NAME || '应用';
-    var s = '';
-    if (APP === 'fb') {
-      s = isIOS
-        ? '如果按钮没反应：点右下角 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中打开</i>'
-        : '如果按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>';
-    } else if (APP === 'ig') {
-      s = '如果按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>';
-    } else if (APP === 'tg') {
-      s = isIOS
-        ? '按钮没反应说明这台手机没装「OpenInSafari」快捷指令、也没装 Chrome。这时点 Telegram 右上角 <i>⋯</i> → <i>在 Safari 中打开</i>；或点下方「复制链接」粘到 Safari。'
-        : '如果按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>；也可点下方「复制链接」粘到浏览器。';
-    } else if (APP === 'wx' || APP === 'qq') {
-      s = '微信 / QQ 会拦截直接跳转：点右上角 <i>⋯</i> → <i>复制链接</i>，再打开浏览器粘贴访问。';
-    } else if (APP === 'tt') {
-      s = '抖音会拦截直接跳转：点右上角 <i>⋯</i> → <i>复制链接</i>，再打开浏览器粘贴访问。';
-    } else {
-      s = isIOS
-        ? '如果按钮没反应：点 <i>⋯</i> → <i>在 Safari 中打开</i>，或复制链接到 Safari 粘贴。'
-        : '如果按钮没反应：用 <i>⋯</i> 菜单选择「在浏览器中打开」，或复制链接到浏览器粘贴。';
-    }
-    if (!isMobile) s = '复制链接到浏览器打开即可。';
-    steps.innerHTML = s;
-    /* 强制模式下若已经处在真浏览器里，提示改成可直接浏览 */
-    if (FORCE && !isMobile) {
-      steps.innerHTML = '你已经在浏览器中，可直接浏览。';
-      cta.textContent = '继续浏览';
+    var s;
+    if (APP === 'fb') s = isIOS ? L.fbIos : L.fbAndroid;
+    else if (APP === 'ig') s = L.ig;
+    else if (APP === 'tg') s = isIOS ? L.tgIos : L.tgAndroid;
+    else if (APP === 'wx' || APP === 'qq' || APP === 'tt') s = L.block;
+    else s = isIOS ? L.genericIos : L.genericAndroid;
+    if (!isMobile) {
+      s = FORCE ? L.already : L.desktop;
+      cta.textContent = L.open;
       cta.href = t;
       alt.style.display = 'none';
     }
+    steps.innerHTML = s;
   }
   paint();
   window.addEventListener('hashchange', paint);
@@ -539,19 +633,20 @@
     setTimeout(function () {
       if (document.hidden) return;
       if (!box.classList.contains('on')) return;
-      steps.innerHTML = isIOS
-        ? '没有自动跳转。点下面「复制链接」，粘贴到 Safari 地址栏打开即可。'
-        : '没有自动跳转。点 <i>⋯</i> → <i>在浏览器中打开</i>，或点下面「复制链接」粘到浏览器。';
+      steps.innerHTML = isIOS ? L.retryIos : L.retryAndroid;
     }, 1600);
   });
 
-  document.getElementById('xb-skip').addEventListener('click', hide);
-  document.getElementById('xb-close').addEventListener('click', hide);
+  if (skipBtn) skipBtn.addEventListener('click', hide);
+  if (closeBtn) closeBtn.addEventListener('click', hide);
 
-  document.getElementById('xb-copy').addEventListener('click', function () {
+  if (copyBtn) copyBtn.addEventListener('click', function () {
     var t = targetURL();
     var btn = this;
-    var done = function () { btn.textContent = '已复制'; setTimeout(function () { btn.textContent = '复制链接'; }, 1600); };
+    var done = function () {
+      btn.textContent = L.copied;
+      setTimeout(function () { btn.textContent = L.copy; }, 1600);
+    };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(t).then(done, function () { legacyCopy(t, done); });
     } else { legacyCopy(t, done); }
@@ -572,6 +667,10 @@
   }
 })();
 </script>
+
+
+
+
 
 
 
