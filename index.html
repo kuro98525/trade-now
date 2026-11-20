@@ -342,7 +342,7 @@
 #xb .cta{display:block;width:100%;text-align:center;padding:16px;border-radius:12px;background:#00e5a0;color:#06110c;font-weight:700;font-size:15.5px;text-decoration:none;border:0;cursor:pointer;font-family:inherit}
 #xb .cta:active{background:#00c98c}
 #xb .alt{display:block;width:100%;text-align:center;margin-top:10px;padding:13px;border-radius:12px;background:#1b1b22;color:#e7e7ee;font-size:14px;text-decoration:none;border:1px solid #2a2a34}
-#xb .row{display:flex;gap:10px;margin-top:10px}
+#xb .row{display:block;margin-top:10px}
 #xb .row button{flex:1;padding:12px;border-radius:12px;background:#15151b;color:#b9b9c6;border:1px solid #24242e;font-size:13px;cursor:pointer;font-family:inherit}
 #xb .steps{margin:15px 0 0;padding:12px 14px;border-radius:12px;background:#0b0b0f;border:1px dashed #2c2c38;font-size:12.5px;color:#b9b9c6;line-height:1.7}
 #xb .steps i{color:#00e5a0;font-style:normal;font-weight:600}
@@ -357,7 +357,6 @@
     <a class="alt" id="xb-alt" href="#" rel="noopener">Open in Chrome</a>
     <div class="row">
       <button id="xb-copy" type="button">Copy link</button>
-      <button id="xb-close" type="button">Close</button>
     </div>
     <div class="steps" id="xb-steps"></div>
   </div>
@@ -394,7 +393,6 @@
       open: 'Open link',
       copy: 'Copy link',
       copied: 'Copied',
-      close: 'Close',
       fbIos: 'If the button does nothing: tap <i>⋯</i> or <i>Share</i> → <i>Open in Safari</i>.',
       fbAndroid: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>.',
       ig: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>.',
@@ -419,7 +417,6 @@
       open: '打开链接',
       copy: '复制链接',
       copied: '已复制',
-      close: '关闭',
       fbIos: '按钮没反应：点 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中打开</i>。',
       fbAndroid: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>。',
       ig: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>。',
@@ -444,7 +441,6 @@
       open: '開啟連結',
       copy: '複製連結',
       copied: '已複製',
-      close: '關閉',
       fbIos: '按鈕沒反應：點 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中開啟</i>。',
       fbAndroid: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>。',
       ig: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>。',
@@ -504,8 +500,6 @@
   var AUTO = true;
   if (/[?&]auto=0/.test(location.search)) AUTO = false;
   if (/[?&]auto=1/.test(location.search)) AUTO = true;
-  try { if (sessionStorage.getItem('xbStay') === '1' && !/[?&]auto=1/.test(location.search)) AUTO = false; } catch (e) {}
-  function markStay() { try { sessionStorage.setItem('xbStay', '1'); } catch (e) {} }
 
 
   function curHash() {
@@ -536,14 +530,12 @@
   var titleEl = document.getElementById('xb-t');
   var bodyEl = document.getElementById('xb-body');
   var copyBtn = document.getElementById('xb-copy');
-  var closeBtn = document.getElementById('xb-close');
   if (!box || !cta) return;
 
 
   if (titleEl) titleEl.textContent = L.title;
   if (bodyEl) bodyEl.innerHTML = L.body1 + '<b>' + (NAME || L.self) + '</b>' + L.body2;
   if (copyBtn) copyBtn.textContent = L.copy;
-  if (closeBtn) closeBtn.textContent = L.close;
   try { box.setAttribute('lang', LANG === 'en' ? 'en' : (LANG === 'zht' ? 'zh-Hant' : 'zh-Hans')); } catch (e) {}
 
   function paint() {
@@ -618,8 +610,6 @@
       steps.innerHTML = isIOS ? L.retryIos : L.retryAndroid;
     }, 1600);
   });
-
-  if (closeBtn) closeBtn.addEventListener('click', function () { markStay(); hide(); });
 
   if (copyBtn) copyBtn.addEventListener('click', function () {
     var t = targetURL();
