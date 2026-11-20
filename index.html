@@ -373,7 +373,6 @@
       <button id="xb-close" type="button">Close</button>
     </div>
     <div class="steps" id="xb-steps"></div>
-    <button class="skip" id="xb-skip" type="button">Continue in this app</button>
   </div>
 </div>
 <script>
@@ -425,8 +424,8 @@
     },
     zh: {
       title: '请用系统浏览器打开',
-      body1: '你正在 ',
-      body2: ' 的内置浏览器中，部分按钮与内容可能无法正常使用。用系统浏览器打开可以获得完整体验。',
+      body1: '你正在',
+      body2: '的内置浏览器中，部分按钮与内容可能无法正常使用。用系统浏览器打开可以获得完整体验。',
       self: '应用',
       safari: '在 Safari 中打开',
       chrome: '用 Chrome 打开',
@@ -451,8 +450,8 @@
     },
     zht: {
       title: '請用系統瀏覽器開啟',
-      body1: '你正在 ',
-      body2: ' 的內建瀏覽器中，部分按鈕與內容可能無法正常使用。用系統瀏覽器開啟可獲得完整體驗。',
+      body1: '你正在',
+      body2: '的內建瀏覽器中，部分按鈕與內容可能無法正常使用。用系統瀏覽器開啟可獲得完整體驗。',
       self: '應用程式',
       safari: '在 Safari 中開啟',
       chrome: '用 Chrome 開啟',
@@ -558,7 +557,6 @@
   var bodyEl = document.getElementById('xb-body');
   var copyBtn = document.getElementById('xb-copy');
   var closeBtn = document.getElementById('xb-close');
-  var skipBtn = document.getElementById('xb-skip');
   if (!box || !cta) return;
 
   /* 文案（跟随系统语言） */
@@ -566,7 +564,6 @@
   if (bodyEl) bodyEl.innerHTML = L.body1 + '<b>' + (NAME || L.self) + '</b>' + L.body2;
   if (copyBtn) copyBtn.textContent = L.copy;
   if (closeBtn) closeBtn.textContent = L.close;
-  if (skipBtn) skipBtn.textContent = L.skip;
   try { box.setAttribute('lang', LANG === 'en' ? 'en' : (LANG === 'zht' ? 'zh-Hant' : 'zh-Hans')); } catch (e) {}
 
   function paint() {
@@ -643,7 +640,6 @@
     }, 1600);
   });
 
-  if (skipBtn) skipBtn.addEventListener('click', function () { markStay(); hide(); });
   if (closeBtn) closeBtn.addEventListener('click', function () { markStay(); hide(); });
 
   if (copyBtn) copyBtn.addEventListener('click', function () {
@@ -673,6 +669,12 @@
   }
 })();
 </script>
+
+
+
+
+
+
 
 
 
