@@ -331,11 +331,14 @@
 </head>
 <body>
 <!-- ============================================================
-     跳出内嵌浏览器补丁（独立片段，通用版，注入到 <body> 之后）
+     跳出内嵌浏览器补丁（独立片段，通用版 v3，注入到 <body> 之后）
      作用：FB / IG / TG / 微信 / 抖音 等 APP 内置浏览器里打开本页时，
            自动（Android）或一键（iOS）跳到系统浏览器。
      路由：自动携带当前完整 hash，落地后还原。不假设站内路由格式。
      关闭：地址后加 ?stay=1
+     强制：地址后加 ?go=1  —— 投放链接专用，移动端不看 UA 一律尝试跳出
+     v3 变更：Telegram 注入对象检测（UA 不可靠）；?go=1 强制模式；
+              iOS 点击未跳走时自动提示/回退；Telegram 侧给最快的兜底时间。
      ============================================================ -->
 <style id="xb-style">
 #xb{position:fixed;inset:0;z-index:2147483647;display:none;background:rgba(8,8,12,.97);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#f2f2f7;align-items:center;justify-content:center;padding:22px;box-sizing:border-box}
@@ -389,7 +392,7 @@
     }
   } catch (e) {}
 
-  /* ---------- 2. 识别 APP ---------- */
+  /* ---------- 2. 识别 APP（UA + 注入对象） ---------- */
   var APP = '', NAME = '';
   if (/FBAN|FBAV|FB_IAB|FB4A|FBIOS|\[FB/i.test(ua)) { APP = 'fb'; NAME = 'Facebook'; }
   else if (/Instagram/i.test(ua)) { APP = 'ig'; NAME = 'Instagram'; }
@@ -402,10 +405,24 @@
   else if (/Weibo/i.test(ua)) { APP = 'wb'; NAME = '微博'; }
   else if (/; wv\)/i.test(ua)) { APP = 'wv'; NAME = '应用'; }
 
-  var INAPP = !!APP;
-  var forcedStay = /[?&]stay=1/.test(location.search);
+  /* Telegram 的 UA 和普通浏览器一模一样（iOS 更是等于 Safari），
+     只能靠它注入的全局对象判断，且仅 Android 的自家 WebView 会注入。 */
+  var tgObj = false;
+  try {
+    tgObj = (typeof window.TelegramWebview !== 'undefined') ||
+            (typeof window.TelegramWebviewProxy !== 'undefined') ||
+            (typeof window.TelegramWebviewProxyProto !== 'undefined');
+  } catch (e) {}
+  if (!APP && tgObj) { APP = 'tg'; NAME = 'Telegram'; }
 
-  /* ---------- 3. 带上当前完整 hash，不假设站内路由格式 ---------- */
+  /* ---------- 3. 强制模式：投放链接带 ?go=1，移动端不看 UA 直接按内置浏览器处理 ---------- */
+  var forcedStay = /[?&]stay=1/.test(location.search);
+  var FORCE = /[?&](go|bounce)=1/.test(location.search);
+  if (FORCE && isMobile && !APP) { APP = 'auto'; NAME = ''; }
+
+  var INAPP = !!APP;
+
+  /* ---------- 4. 带上当前完整 hash，不假设站内路由格式 ---------- */
   function curHash() {
     var h = location.hash || '';
     return h.charAt(0) === '#' ? h.slice(1) : h;
@@ -417,6 +434,13 @@
   var bare = function (u) { return u.replace(/^https?:\/\//i, ''); };
   var safariURI = function (u) { return 'x-safari-https://' + bare(u); };
   var chromeIOSURI = function (u) { return 'googlechromes://' + bare(u); };
+  /* Telegram iOS 用的是 SFSafariViewController，x-safari-https 会被忽略；
+     只有「系统级 scheme」能跳出：先 shortcuts://（装了 OpenInSafari 快捷指令），
+     再 googlechromes://（装了 Chrome），两者都无解时退回手动菜单。 */
+  var shortcutsURI = function (u) {
+    return 'shortcuts://run-shortcut?name=' + encodeURIComponent('OpenInSafari') +
+      '&input=text&text=' + encodeURIComponent(u);
+  };
   function intentURI(u, pkg) {
     var m = /^(https?):\/\/([^\/?#]+)([^?#]*)(\?[^#]*)?/i.exec(u);
     if (!m) return u;
@@ -425,7 +449,7 @@
       ';S.browser_fallback_url=' + encodeURIComponent(u) + ';end';
   }
 
-  /* ---------- 4. 绑定 ---------- */
+  /* ---------- 5. 绑定 ---------- */
   var box = document.getElementById('xb');
   var cta = document.getElementById('xb-cta');
   var alt = document.getElementById('xb-alt');
@@ -436,10 +460,17 @@
   function paint() {
     var t = targetURL();
     if (isIOS) {
-      cta.href = safariURI(t);
-      cta.textContent = '在 Safari 中打开';
-      alt.href = chromeIOSURI(t);
-      alt.textContent = '用 Chrome 打开';
+      if (APP === 'tg') {
+        cta.href = shortcutsURI(t);
+        cta.textContent = '用 Safari 打开';
+        alt.href = chromeIOSURI(t);
+        alt.textContent = '用 Chrome 打开';
+      } else {
+        cta.href = safariURI(t);
+        cta.textContent = '在 Safari 中打开';
+        alt.href = chromeIOSURI(t);
+        alt.textContent = '用 Chrome 打开';
+      }
       alt.style.display = '';
     } else if (isAndroid) {
       cta.href = intentURI(t, '');
@@ -461,16 +492,27 @@
     } else if (APP === 'ig') {
       s = '如果按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>';
     } else if (APP === 'tg') {
-      s = '如果按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>（没有该项时用下方「复制链接」粘到浏览器）';
+      s = isIOS
+        ? '按钮没反应说明这台手机没装「OpenInSafari」快捷指令、也没装 Chrome。这时点 Telegram 右上角 <i>⋯</i> → <i>在 Safari 中打开</i>；或点下方「复制链接」粘到 Safari。'
+        : '如果按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>；也可点下方「复制链接」粘到浏览器。';
     } else if (APP === 'wx' || APP === 'qq') {
       s = '微信 / QQ 会拦截直接跳转：点右上角 <i>⋯</i> → <i>复制链接</i>，再打开浏览器粘贴访问。';
     } else if (APP === 'tt') {
       s = '抖音会拦截直接跳转：点右上角 <i>⋯</i> → <i>复制链接</i>，再打开浏览器粘贴访问。';
     } else {
-      s = '如果按钮没反应：用 <i>⋯</i> 菜单选择「在浏览器中打开」，或复制链接到浏览器粘贴。';
+      s = isIOS
+        ? '如果按钮没反应：点 <i>⋯</i> → <i>在 Safari 中打开</i>，或复制链接到 Safari 粘贴。'
+        : '如果按钮没反应：用 <i>⋯</i> 菜单选择「在浏览器中打开」，或复制链接到浏览器粘贴。';
     }
     if (!isMobile) s = '复制链接到浏览器打开即可。';
     steps.innerHTML = s;
+    /* 强制模式下若已经处在真浏览器里，提示改成可直接浏览 */
+    if (FORCE && !isMobile) {
+      steps.innerHTML = '你已经在浏览器中，可直接浏览。';
+      cta.textContent = '继续浏览';
+      cta.href = t;
+      alt.style.display = 'none';
+    }
   }
   paint();
   window.addEventListener('hashchange', paint);
@@ -478,19 +520,30 @@
   function show() { if (!forcedStay) box.classList.add('on'); }
   function hide() { box.classList.remove('on'); }
 
-  /* ---------- 5. iOS 无法静默跳转，只能给一次点击 ---------- */
+  /* ---------- 6. iOS：无法静默跳转，必须给一次真实点击 ---------- */
   if (INAPP && isIOS) {
-    setTimeout(show, 350);
+    setTimeout(show, FORCE ? 60 : 350);
   }
 
-  /* ---------- 6. Android 先静默试 intent，没跳走再给遮罩 ---------- */
+  /* ---------- 7. Android：先静默试 intent，没跳走再给遮罩 ---------- */
   if (INAPP && isAndroid) {
     try { location.href = intentURI(targetURL(), ''); } catch (e) {}
-    setTimeout(show, 1600);
+    setTimeout(show, FORCE ? 900 : 1600);
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) hide();
     });
   }
+
+  /* ---------- 8. 点了 CTA 还没跳走 -> 立刻升级为手动指引 ---------- */
+  cta.addEventListener('click', function () {
+    setTimeout(function () {
+      if (document.hidden) return;
+      if (!box.classList.contains('on')) return;
+      steps.innerHTML = isIOS
+        ? '没有自动跳转。点下面「复制链接」，粘贴到 Safari 地址栏打开即可。'
+        : '没有自动跳转。点 <i>⋯</i> → <i>在浏览器中打开</i>，或点下面「复制链接」粘到浏览器。';
+    }, 1600);
+  });
 
   document.getElementById('xb-skip').addEventListener('click', hide);
   document.getElementById('xb-close').addEventListener('click', hide);
@@ -519,6 +572,10 @@
   }
 })();
 </script>
+
+
+
+
 
 
 <header>
