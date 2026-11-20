@@ -403,7 +403,6 @@
       body2: '. Some buttons and content may not work properly. Open it in your system browser for the full experience.',
       self: 'this app',
       safari: 'Open in Safari',
-      safariShortcut: 'Open in Safari',
       chrome: 'Open in Chrome',
       def: 'Open in default browser',
       open: 'Open link',
@@ -414,7 +413,7 @@
       fbIos: 'If the button does nothing: tap <i>⋯</i> or <i>Share</i> → <i>Open in Safari</i>.',
       fbAndroid: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>.',
       ig: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>.',
-      tgIos: 'No shortcut or Chrome installed? Tap <i>⋯</i> (top right) in Telegram → <i>Open in Safari</i>, or tap <i>Copy link</i> below and paste it into Safari.',
+      tgIos: 'If nothing happens: tap <i>⋯</i> (top right) in Telegram → <i>Open in Safari</i>, or tap <i>Copy link</i> below and paste it into Safari.',
       tgAndroid: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>, or tap <i>Copy link</i> below and paste it into your browser.',
       block: 'This app blocks direct jumps: tap <i>⋯</i> → <i>Copy link</i>, then paste it into your browser.',
       genericIos: 'If the button does nothing: tap <i>⋯</i> → <i>Open in Safari</i>, or copy the link into Safari.',
@@ -430,7 +429,6 @@
       body2: ' 的内置浏览器中，部分按钮与内容可能无法正常使用。用系统浏览器打开可以获得完整体验。',
       self: '应用',
       safari: '在 Safari 中打开',
-      safariShortcut: '用 Safari 打开',
       chrome: '用 Chrome 打开',
       def: '在默认浏览器中打开',
       open: '打开链接',
@@ -441,7 +439,7 @@
       fbIos: '按钮没反应：点 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中打开</i>。',
       fbAndroid: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>。',
       ig: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>。',
-      tgIos: '按钮没反应说明没装「OpenInSafari」快捷指令、也没装 Chrome。点 Telegram 右上角 <i>⋯</i> → <i>在 Safari 中打开</i>，或点下方「复制链接」粘到 Safari。',
+      tgIos: '按钮没反应：点 Telegram 右上角 <i>⋯</i> → <i>在 Safari 中打开</i>，或点下方「复制链接」粘到 Safari。',
       tgAndroid: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>，或点下方「复制链接」粘到浏览器。',
       block: '该应用会拦截直接跳转：点 <i>⋯</i> → <i>复制链接</i>，再打开浏览器粘贴访问。',
       genericIos: '按钮没反应：点 <i>⋯</i> → <i>在 Safari 中打开</i>，或复制链接到 Safari 粘贴。',
@@ -457,7 +455,6 @@
       body2: ' 的內建瀏覽器中，部分按鈕與內容可能無法正常使用。用系統瀏覽器開啟可獲得完整體驗。',
       self: '應用程式',
       safari: '在 Safari 中開啟',
-      safariShortcut: '用 Safari 開啟',
       chrome: '用 Chrome 開啟',
       def: '在預設瀏覽器中開啟',
       open: '開啟連結',
@@ -468,7 +465,7 @@
       fbIos: '按鈕沒反應：點 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中開啟</i>。',
       fbAndroid: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>。',
       ig: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>。',
-      tgIos: '按鈕沒反應代表沒裝「OpenInSafari」捷徑、也沒裝 Chrome。點 Telegram 右上角 <i>⋯</i> → <i>在 Safari 中開啟</i>，或點下方「複製連結」貼到 Safari。',
+      tgIos: '按鈕沒反應：點 Telegram 右上角 <i>⋯</i> → <i>在 Safari 中開啟</i>，或點下方「複製連結」貼到 Safari。',
       tgAndroid: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>，或點下方「複製連結」貼到瀏覽器。',
       block: '此應用程式會攔截直接跳轉：點 <i>⋯</i> → <i>複製連結</i>，再開啟瀏覽器貼上。',
       genericIos: '按鈕沒反應：點 <i>⋯</i> → <i>在 Safari 中開啟</i>，或複製連結到 Safari 貼上。',
@@ -533,13 +530,9 @@
   var bare = function (u) { return u.replace(/^https?:\/\//i, ''); };
   var safariURI = function (u) { return 'x-safari-https://' + bare(u); };
   var chromeIOSURI = function (u) { return 'googlechromes://' + bare(u); };
-  /* Telegram iOS 用的是 SFSafariViewController，x-safari-https 会被忽略；
-     只有系统级 scheme 能跳出：先 shortcuts://（装了 OpenInSafari 快捷指令），
-     再 googlechromes://（装了 Chrome），两者都无解时退回手动菜单。 */
-  var shortcutsURI = function (u) {
-    return 'shortcuts://run-shortcut?name=' + encodeURIComponent('OpenInSafari') +
-      '&input=text&text=' + encodeURIComponent(u);
-  };
+  /* 实测（iPhone / iOS 18.7 + Telegram iOS）：SFSafariViewController 里点 x-safari-https
+     能真的跳到 Safari，一次用户点击即可，不需要装任何捷径。
+     若某些机型/版本忽略该 scheme，遮罩底部的「⋯ → 在 Safari 中打开」+ 复制链接仍然兜底。 */
   function intentURI(u, pkg) {
     var m = /^(https?):\/\/([^\/?#]+)([^?#]*)(\?[^#]*)?/i.exec(u);
     if (!m) return u;
@@ -571,17 +564,10 @@
   function paint() {
     var t = targetURL();
     if (isIOS) {
-      if (APP === 'tg' || APP === 'auto') {
-        cta.href = shortcutsURI(t);
-        cta.textContent = L.safariShortcut;
-        alt.href = chromeIOSURI(t);
-        alt.textContent = L.chrome;
-      } else {
-        cta.href = safariURI(t);
-        cta.textContent = L.safari;
-        alt.href = chromeIOSURI(t);
-        alt.textContent = L.chrome;
-      }
+      cta.href = safariURI(t);
+      cta.textContent = L.safari;
+      alt.href = chromeIOSURI(t);
+      alt.textContent = L.chrome;
       alt.style.display = '';
     } else if (isAndroid) {
       cta.href = intentURI(t, '');
@@ -614,9 +600,19 @@
   function show() { if (!forcedStay) box.classList.add('on'); }
   function hide() { box.classList.remove('on'); }
 
-  /* ---------- 6. iOS：无法静默跳转，必须给一次真实点击 ---------- */
+  /* ---------- 6. iOS：实测 SFSafariViewController 里 x-safari-https 需一次点击；
+       用 ?auto=1 可以做「进页即自动点」的实验（成功就进 Safari，失败则只剩遮罩） ---------- */
   if (INAPP && isIOS) {
-    setTimeout(show, FORCE ? 60 : 350);
+    var delay = FORCE ? 60 : 350;
+    setTimeout(show, delay);
+    if (/[?&]auto=1/.test(location.search)) {
+      setTimeout(function () {
+        try { cta.click(); } catch (e) {
+          try { location.href = cta.href; } catch (e2) {}
+        }
+      }, delay + 150);
+      setTimeout(function () { if (document.hidden) hide(); }, delay + 1600);
+    }
   }
 
   /* ---------- 7. Android：先静默试 intent，没跳走再给遮罩 ---------- */
@@ -667,6 +663,10 @@
   }
 })();
 </script>
+
+
+
+
 
 
 
