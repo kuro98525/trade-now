@@ -122,7 +122,7 @@
   .bubble.ai{border-color:rgba(42,171,238,.4);background:rgba(42,171,238,.08)}
   .typing{color:var(--accent);font-size:13px}
 
-  /* live market demo inside the chat */
+  
   .chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
   .chat-title{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:650;line-height:1.25}
   .chat-avatar{
@@ -152,7 +152,7 @@
   .t-chg{display:block;font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums}
   .up{color:#2fe07a}.down{color:#ff6b6b}.flat{color:var(--muted)}
 
-  /* Fixed-height transcript so adding messages never changes the page layout */
+  
   .chat-window{position:relative;margin-top:12px}
   .chat-window::after{
     content:"";position:absolute;left:0;right:0;top:0;height:22px;pointer-events:none;
@@ -244,7 +244,7 @@
     .dd-bar i{transition:none}
   }
 
-  /* trust wall */
+  
   .trust{position:relative;overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2);padding:80px 0}
   .logo-wall{
     position:absolute;inset:0;z-index:0;
@@ -951,20 +951,20 @@
     });
   });
 
-  /* ---- Live demo: real prices (CoinGecko) + interactive chat preview ---- */
+  
   (function(){
     var root=document.getElementById('chatPreview');
     if(!root) return;
 
-    // One request gives price, 24h change and a real 7-day sparkline for all three coins.
+    
     var API='https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana&sparkline=true&price_change_percentage=24h&per_page=3&page=1';
-    var POLL=30000;            // CoinGecko caches this endpoint for 30s and the free tier is rate-limited
+    var POLL=30000;            
     var CACHE_KEY='tn-spot-v1';
     var CACHE_TTL=10*60*1000;
-    var EQUITY=10000;          // simulated paper account
-    var DEFAULT_SIZE=20;       // % of equity per strategy
+    var EQUITY=10000;          
+    var DEFAULT_SIZE=20;       
     var DEFAULT_LEV=1;
-    var DD_CAP=8;              // max drawdown guard, in %
+    var DD_CAP=8;              
     var COINS={bitcoin:'BTC',ethereum:'ETH',solana:'SOL'};
 
     var tickersEl=document.getElementById('tickers');
@@ -1047,7 +1047,7 @@
       if(h.length>80) h.shift();
     }
 
-    // /coins/markets returns an array; fold it into the shape the card expects.
+    
     function normalize(arr){
       var out={};
       for(var i=0;i<arr.length;i++){
@@ -1070,8 +1070,8 @@
         return;
       }
 
-      // The series is hourly for 7 days; the last 25 points are the last 24 hours,
-      // so the line matches the 24h change printed beside it.
+      
+      
       var series=arr.length>25?arr.slice(-25):arr;
 
       var W=100,H=14,P=1.5,N=40,vals=[],i,v;
@@ -1199,11 +1199,11 @@
       if(state.entry==null){ state.entry=price; state.peak=price; }
       if(price>state.peak) state.peak=price;
 
-      // Loss is measured against margin, so leverage scales drawdown too.
+      
       var ddPrice=(state.peak-price)/state.peak*100;
       var dd=ddPrice*state.lev;
       if(dd>=state.ddCap){
-        // The risk control in the story is real logic here: reset the simulated position.
+        
         state.entry=price;
         state.peak=price;
         dd=0;
@@ -1317,7 +1317,7 @@
       scrollChat();
     }
 
-    /* ---- visitor-typed strategies, run as a simulation ---- */
+    
     function setTyping(text){ typingText.textContent=text; }
 
     function seriesStats(series){
@@ -1427,7 +1427,7 @@
         chatInput.disabled=false;
         chatSend.disabled=false;
         try{
-          // Don't pop the mobile keyboard after the answer lands.
+          
           if(!matchMedia('(pointer: coarse)').matches) chatInput.focus();
         }catch(e){}
         scrollChat();
@@ -1460,7 +1460,7 @@
     });
     window.addEventListener('online',function(){ fetchPrices(false); });
 
-    // Boot: reuse a very fresh cached response so reloads don't burn the rate limit.
+    
     var cached=readCache();
     if(cached&&Date.now()-cached.t<CACHE_TTL){
       var fresh=Date.now()-cached.t<POLL;
