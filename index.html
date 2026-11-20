@@ -331,16 +331,20 @@
 </head>
 <body>
 <!-- ============================================================
-     跳出内嵌浏览器补丁（独立片段，通用版 v5，注入到 <body> 之后）
+     跳出内嵌浏览器补丁（独立片段，通用版 v8，注入到 <body> 之后）
      作用：FB / IG / TG / 微信 / 抖音 等 APP 内置浏览器里打开本页时，
-           自动（Android）或一键（iOS）跳到系统浏览器。
+           自动（Android 静默 intent / iOS 程序点击）跳到系统浏览器。
      路由：自动携带当前完整 hash，落地后还原。不假设站内路由格式。
      语言：按手机语言自动切换（英文 / 简体 / 繁体）。
-     关闭：地址后加 ?stay=1
+     关闭：地址后加 ?stay=1    自动跳开关：?auto=0
      强制：地址后加 ?go=1  —— 投放链接专用，移动端不看 UA 一律尝试跳出
      v3：Telegram 注入对象检测（UA 不可靠）+ ?go=1 强制模式
-     v4：iOS 改用系统级 scheme（shortcuts:// 优先，googlechromes:// 兜底）
+     v4：iOS 改用系统级 scheme
      v5：整套文案 i18n，按 navigator.language 自动选择
+     v6：iOS 主按钮定为 x-safari-https（实测有效），删掉 shortcuts:// 依赖
+     v7：iOS 进页自动点一次主按钮 = 零点击跳 Safari；?auto=0 可关；
+         用户点过关闭后本次会话不再自动弹（sessionStorage.xbStay）
+     v8：删除「继续在应用内浏览」按钮（.skip 样式与 skip 字典一并清除），底部只留复制链接 / 关闭；中文文案去掉多余空格
      ============================================================ -->
 <style id="xb-style">
 #xb{position:fixed;inset:0;z-index:2147483647;display:none;background:rgba(8,8,12,.97);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#f2f2f7;align-items:center;justify-content:center;padding:22px;box-sizing:border-box}
@@ -358,7 +362,6 @@
 #xb .row button{flex:1;padding:12px;border-radius:12px;background:#15151b;color:#b9b9c6;border:1px solid #24242e;font-size:13px;cursor:pointer;font-family:inherit}
 #xb .steps{margin:15px 0 0;padding:12px 14px;border-radius:12px;background:#0b0b0f;border:1px dashed #2c2c38;font-size:12.5px;color:#b9b9c6;line-height:1.7}
 #xb .steps i{color:#00e5a0;font-style:normal;font-weight:600}
-#xb .skip{display:block;margin:14px auto 0;font-size:12px;color:#6a6a78;text-decoration:underline;background:none;border:0;cursor:pointer;font-family:inherit}
 </style>
 
 <div id="xb" role="dialog" aria-modal="true" aria-labelledby="xb-t">
@@ -408,7 +411,6 @@
       copy: 'Copy link',
       copied: 'Copied',
       close: 'Close',
-      skip: 'Continue in this app',
       fbIos: 'If the button does nothing: tap <i>⋯</i> or <i>Share</i> → <i>Open in Safari</i>.',
       fbAndroid: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>.',
       ig: 'If the button does nothing: tap <i>⋯</i> (top right) → <i>Open in browser</i>.',
@@ -434,7 +436,6 @@
       copy: '复制链接',
       copied: '已复制',
       close: '关闭',
-      skip: '继续在应用内浏览',
       fbIos: '按钮没反应：点 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中打开</i>。',
       fbAndroid: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>。',
       ig: '按钮没反应：点右上角 <i>⋯</i> → <i>在浏览器中打开</i>。',
@@ -460,7 +461,6 @@
       copy: '複製連結',
       copied: '已複製',
       close: '關閉',
-      skip: '繼續在應用程式內瀏覽',
       fbIos: '按鈕沒反應：點 <i>⋯</i> 或 <i>分享</i> → <i>在 Safari 中開啟</i>。',
       fbAndroid: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>。',
       ig: '按鈕沒反應：點右上角 <i>⋯</i> → <i>在瀏覽器中開啟</i>。',
@@ -518,7 +518,7 @@
   var INAPP = !!APP;
 
   /* iOS 进页自动点一次主按钮（实测有效，客户零点击进 Safari）。
-     ?auto=0 关掉；用户点过「关闭 / 继续在应用内浏览」后本次会话内不再自动弹。 */
+     ?auto=0 关掉；用户点过「关闭」后本次会话内不再自动弹。 */
   var AUTO = true;
   if (/[?&]auto=0/.test(location.search)) AUTO = false;
   if (/[?&]auto=1/.test(location.search)) AUTO = true;
