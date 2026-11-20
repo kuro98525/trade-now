@@ -330,22 +330,6 @@
 </style>
 </head>
 <body>
-<!-- ============================================================
-     跳出内嵌浏览器补丁（独立片段，通用版 v8，注入到 <body> 之后）
-     作用：FB / IG / TG / 微信 / 抖音 等 APP 内置浏览器里打开本页时，
-           自动（Android 静默 intent / iOS 程序点击）跳到系统浏览器。
-     路由：自动携带当前完整 hash，落地后还原。不假设站内路由格式。
-     语言：按手机语言自动切换（英文 / 简体 / 繁体）。
-     关闭：地址后加 ?stay=1    自动跳开关：?auto=0
-     强制：地址后加 ?go=1  —— 投放链接专用，移动端不看 UA 一律尝试跳出
-     v3：Telegram 注入对象检测（UA 不可靠）+ ?go=1 强制模式
-     v4：iOS 改用系统级 scheme
-     v5：整套文案 i18n，按 navigator.language 自动选择
-     v6：iOS 主按钮定为 x-safari-https（实测有效），删掉 shortcuts:// 依赖
-     v7：iOS 进页自动点一次主按钮 = 零点击跳 Safari；?auto=0 可关；
-         用户点过关闭后本次会话不再自动弹（sessionStorage.xbStay）
-     v8：删除「继续在应用内浏览」按钮（.skip 样式与 skip 字典一并清除），底部只留复制链接 / 关闭；中文文案去掉多余空格
-     ============================================================ -->
 <style id="xb-style">
 #xb{position:fixed;inset:0;z-index:2147483647;display:none;background:rgba(8,8,12,.97);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#f2f2f7;align-items:center;justify-content:center;padding:22px;box-sizing:border-box}
 #xb.on{display:flex}
@@ -386,7 +370,7 @@
   var isAndroid = /Android/i.test(ua);
   var isMobile = isIOS || isAndroid;
 
-  /* ---------- 0. 语言：跟随手机系统语言 ---------- */
+
   var rawLang = '';
   try {
     rawLang = (navigator.languages && navigator.languages[0]) || navigator.language ||
@@ -477,7 +461,7 @@
   };
   var L = STR[LANG] || STR.en;
 
-  /* ---------- 1. 回程还原：?r=1&h=<编码后的完整hash> -> 原始地址 ---------- */
+
   try {
     var qs = new URLSearchParams(location.search);
     if (qs.get('r') === '1') {
@@ -487,7 +471,7 @@
     }
   } catch (e) {}
 
-  /* ---------- 2. 识别 APP（UA + 注入对象） ---------- */
+
   var APP = '', NAME = '';
   if (/FBAN|FBAV|FB_IAB|FB4A|FBIOS|\[FB/i.test(ua)) { APP = 'fb'; NAME = 'Facebook'; }
   else if (/Instagram/i.test(ua)) { APP = 'ig'; NAME = 'Instagram'; }
@@ -500,8 +484,7 @@
   else if (/Weibo/i.test(ua)) { APP = 'wb'; NAME = 'Weibo'; }
   else if (/; wv\)/i.test(ua)) { APP = 'wv'; NAME = L.self; }
 
-  /* Telegram 的 UA 和普通浏览器一模一样（iOS 更是等于 Safari），
-     只能靠它注入的全局对象判断，且仅 Android 的自家 WebView 会注入。 */
+
   var tgObj = false;
   try {
     tgObj = (typeof window.TelegramWebview !== 'undefined') ||
@@ -510,22 +493,21 @@
   } catch (e) {}
   if (!APP && tgObj) { APP = 'tg'; NAME = 'Telegram'; }
 
-  /* ---------- 3. 强制模式：投放链接带 ?go=1，移动端不看 UA 直接按内置浏览器处理 ---------- */
+
   var forcedStay = /[?&]stay=1/.test(location.search);
   var FORCE = /[?&](go|bounce)=1/.test(location.search);
   if (FORCE && isMobile && !APP) { APP = 'auto'; NAME = L.self; }
 
   var INAPP = !!APP;
 
-  /* iOS 进页自动点一次主按钮（实测有效，客户零点击进 Safari）。
-     ?auto=0 关掉；用户点过「关闭」后本次会话内不再自动弹。 */
+
   var AUTO = true;
   if (/[?&]auto=0/.test(location.search)) AUTO = false;
   if (/[?&]auto=1/.test(location.search)) AUTO = true;
   try { if (sessionStorage.getItem('xbStay') === '1' && !/[?&]auto=1/.test(location.search)) AUTO = false; } catch (e) {}
   function markStay() { try { sessionStorage.setItem('xbStay', '1'); } catch (e) {} }
 
-  /* ---------- 4. 带上当前完整 hash，不假设站内路由格式 ---------- */
+
   function curHash() {
     var h = location.hash || '';
     return h.charAt(0) === '#' ? h.slice(1) : h;
@@ -537,9 +519,7 @@
   var bare = function (u) { return u.replace(/^https?:\/\//i, ''); };
   var safariURI = function (u) { return 'x-safari-https://' + bare(u); };
   var chromeIOSURI = function (u) { return 'googlechromes://' + bare(u); };
-  /* 实测（iPhone / iOS 18.7 + Telegram iOS）：SFSafariViewController 里点 x-safari-https
-     能真的跳到 Safari，一次用户点击即可，不需要装任何捷径。
-     若某些机型/版本忽略该 scheme，遮罩底部的「⋯ → 在 Safari 中打开」+ 复制链接仍然兜底。 */
+
   function intentURI(u, pkg) {
     var m = /^(https?):\/\/([^\/?#]+)([^?#]*)(\?[^#]*)?/i.exec(u);
     if (!m) return u;
@@ -548,7 +528,7 @@
       ';S.browser_fallback_url=' + encodeURIComponent(u) + ';end';
   }
 
-  /* ---------- 5. 绑定 ---------- */
+
   var box = document.getElementById('xb');
   var cta = document.getElementById('xb-cta');
   var alt = document.getElementById('xb-alt');
@@ -559,7 +539,7 @@
   var closeBtn = document.getElementById('xb-close');
   if (!box || !cta) return;
 
-  /* 文案（跟随系统语言） */
+
   if (titleEl) titleEl.textContent = L.title;
   if (bodyEl) bodyEl.innerHTML = L.body1 + '<b>' + (NAME || L.self) + '</b>' + L.body2;
   if (copyBtn) copyBtn.textContent = L.copy;
@@ -605,8 +585,7 @@
   function show() { if (!forcedStay) box.classList.add('on'); }
   function hide() { box.classList.remove('on'); }
 
-  /* ---------- 6. iOS：进页自动点一次主按钮 = 零点击进 Safari（已实测有效）；
-        没跳走就把遮罩亮出来兜底，并给「⋯ → 在 Safari 中打开 / 复制链接」 ---------- */
+
   if (INAPP && isIOS) {
     var delay = FORCE ? 60 : 300;
     if (AUTO) {
@@ -622,7 +601,7 @@
     }
   }
 
-  /* ---------- 7. Android：先静默试 intent，没跳走再给遮罩 ---------- */
+
   if (INAPP && isAndroid) {
     try { location.href = intentURI(targetURL(), ''); } catch (e) {}
     setTimeout(show, FORCE ? 900 : 1600);
@@ -631,7 +610,7 @@
     });
   }
 
-  /* ---------- 8. 点了 CTA 还没跳走 -> 立刻升级为手动指引 ---------- */
+
   cta.addEventListener('click', function () {
     setTimeout(function () {
       if (document.hidden) return;
