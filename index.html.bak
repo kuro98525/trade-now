@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trade NOW — AI Quant Trading, Right Inside Telegram</title>
+<meta name="description" content="AI quant trading assistant: generate a strategy in one sentence, trade automatically 24/7, and check positions, P&amp;L and risk controls anytime — all inside Telegram. No app needed.">
+<style>
+  :root{
+    --bg:#0b0d14;
+    --bg2:#11141f;
+    --card:#161a28;
+    --border:rgba(255,255,255,.08);
+    --text:#eef1f7;
+    --muted:#9aa3b5;
+    --accent:#2aabee;
+    --accent2:#7c5cff;
+    --grad:linear-gradient(135deg,#2aabee 0%,#7c5cff 100%);
+    --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+  header{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(14px);background:rgba(11,13,20,.75);
+    border-bottom:1px solid var(--border);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .logo{font-size:20px;font-weight:700;letter-spacing:.5px}
+  .logo .dot{color:var(--accent)}
+  .logo .rainbow{
+    background:linear-gradient(90deg,#ff4d4d,#ff9f1a,#ffd60a,#3ddc84,#2aabee,#7c5cff,#ff4dd2,#ff4d4d);
+    background-size:200% 100%;
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    animation:rainbow 6s linear infinite;
+  }
+  @keyframes rainbow{to{background-position:-200% 0}}
+  @media (prefers-reduced-motion:reduce){.logo .rainbow{animation:none}}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 26px;border-radius:999px;font-weight:600;font-size:15px;
+    background:var(--grad);color:#fff;border:none;cursor:pointer;
+    transition:transform .15s ease,box-shadow .15s ease;
+    box-shadow:0 8px 24px rgba(42,171,238,.28);
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(42,171,238,.4)}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text);box-shadow:none}
+  .btn.ghost:hover{border-color:var(--accent)}
+
+  .hero{padding:56px 0 48px;text-align:center;position:relative;overflow:hidden}
+  .hero::before{
+    content:"";position:absolute;inset:-40% -20%;z-index:-1;
+    background:
+      radial-gradient(600px 400px at 30% 20%,rgba(42,171,238,.18),transparent 60%),
+      radial-gradient(600px 400px at 70% 30%,rgba(124,92,255,.18),transparent 60%);
+  }
+  .hero-bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .tg-mark{
+    position:absolute;left:50%;top:50%;width:min(46vw,460px);height:auto;opacity:.055;
+    transform:translate(-50%,-50%);animation:tgPulse 7s ease-in-out infinite;
+  }
+  .flow{position:absolute;left:50%;top:50%;width:0;height:0}
+  .flow img{
+    position:absolute;left:-20px;top:-20px;width:40px;height:40px;padding:5px;object-fit:contain;border-radius:10px;
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.10);
+    filter:grayscale(1);opacity:0;animation:coinFly 9s linear infinite;animation-delay:calc(var(--d) - 9s);
+  }
+  .candles{
+    position:absolute;left:0;right:0;bottom:0;height:120px;display:flex;align-items:flex-end;justify-content:space-between;
+    gap:8px;padding:0 16px;opacity:.1;
+    -webkit-mask-image:linear-gradient(to top,#000 35%,transparent);mask-image:linear-gradient(to top,#000 35%,transparent);
+  }
+  .candles span{position:relative;width:6px;height:var(--h);background:#3ddc84;border-radius:2px}
+  .candles span::before{content:"";position:absolute;left:50%;top:-8px;width:1px;height:calc(100% + 16px);background:inherit;transform:translateX(-50%)}
+  .candles span.down{background:#ff6b6b}
+  @keyframes tgPulse{
+    0%,100%{opacity:.05;transform:translate(-50%,-50%) scale(1)}
+    50%{opacity:.075;transform:translate(-50%,-50%) scale(1.03)}
+  }
+  @keyframes coinFly{
+    0%{transform:translate(var(--sx),var(--sy)) scale(.55);opacity:0}
+    12%{opacity:.55}
+    72%{opacity:.5}
+    100%{transform:translate(0,0) scale(.2);opacity:0}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .tg-mark{animation:none}
+    .flow{display:none}
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 16px;
+    border-radius:999px;border:1px solid var(--border);background:var(--bg2);
+    font-size:13px;color:var(--muted);margin-bottom:24px;
+  }
+  .badge .live{width:7px;height:7px;border-radius:50%;background:#2fe07a;box-shadow:0 0 8px #2fe07a}
+  .hero h1{font-size:52px;line-height:1.15;font-weight:800;margin-bottom:20px;letter-spacing:-1px}
+  .hero p.sub{font-size:19px;color:var(--muted);max-width:640px;margin:0 auto 36px}
+  .hero .cta-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .hero .hint{font-size:13px;color:var(--muted);margin-top:18px}
+  .hero .wrap{position:relative;z-index:2}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;text-align:left}
+  .hero-grid h1{font-size:44px;letter-spacing:-.5px}
+  .hero-grid .sub{margin:0 0 32px;max-width:560px}
+  .hero-grid .cta-row{justify-content:flex-start}
+  .chat-preview{
+    position:relative;max-width:420px;min-width:0;margin:56px auto 0;text-align:left;background:var(--card);
+    border:1px solid var(--border);border-radius:var(--radius);padding:18px;
+    box-shadow:0 24px 60px rgba(0,0,0,.4);
+  }
+  .hero-grid .chat-preview{margin:0;justify-self:end;width:100%;min-width:0}
+  .bubble{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:10px}
+  .bubble.ai{border-color:rgba(42,171,238,.4);background:rgba(42,171,238,.08)}
+  .typing{color:var(--accent);font-size:13px}
+
+  /* live market demo inside the chat */
+  .chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  .chat-title{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:650;line-height:1.25}
+  .chat-avatar{
+    width:32px;height:32px;border-radius:50%;background:var(--grad);flex:none;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;letter-spacing:.5px;color:#fff;
+    box-shadow:0 4px 12px rgba(42,171,238,.35);
+  }
+  .chat-sub{display:block;font-size:10.5px;font-weight:500;color:var(--muted);letter-spacing:.2px}
+  .chat-sub i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#2fe07a;box-shadow:0 0 6px #2fe07a;margin-right:5px;vertical-align:1px}
+  .chat-sub.err i{background:#ff8a5c;box-shadow:0 0 6px #ff8a5c}
+  .chat-live{flex:none;font-size:10px;font-weight:700;letter-spacing:1.5px;color:#2fe07a;border:1px solid rgba(47,224,122,.3);background:rgba(47,224,122,.08);padding:3px 9px;border-radius:999px}
+
+  .tickers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 2px;min-width:0}
+  .ticker{
+    font-family:inherit;text-align:left;min-width:0;cursor:pointer;color:var(--text);
+    background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:7px 9px;
+    transition:border-color .2s,background .2s;
+  }
+  .ticker:hover{border-color:rgba(42,171,238,.5)}
+  .ticker:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .ticker[aria-pressed="true"]{border-color:rgba(42,171,238,.65);background:rgba(42,171,238,.10)}
+  .ticker.flash{animation:tickPulse .7s ease-out}
+  @keyframes tickPulse{from{box-shadow:0 0 0 0 rgba(42,171,238,.5)}to{box-shadow:0 0 0 8px rgba(42,171,238,0)}}
+  .t-sym{display:block;font-size:9.5px;font-weight:700;letter-spacing:1.2px;color:var(--muted)}
+  .t-price{display:block;font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .t-chg{display:block;font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums}
+  .up{color:#2fe07a}.down{color:#ff6b6b}.flat{color:var(--muted)}
+
+  /* Fixed-height transcript so adding messages never changes the page layout */
+  .chat-window{position:relative;margin-top:12px}
+  .chat-window::after{
+    content:"";position:absolute;left:0;right:0;top:0;height:22px;pointer-events:none;
+    background:linear-gradient(var(--card),rgba(22,26,40,0));
+    opacity:0;transition:opacity .2s ease;
+  }
+  .chat-window.fade-top::after{opacity:1}
+  .chat-body{
+    display:flex;flex-direction:column;height:300px;overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent;
+  }
+  .chat-body::-webkit-scrollbar{width:4px}
+  .chat-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px}
+  .chat-body .bubble{flex:none;max-width:90%;line-height:1.55;padding:9px 13px;margin-bottom:8px}
+  .chat-body .bubble.user{margin-left:auto;background:rgba(42,171,238,.12);border-color:rgba(42,171,238,.28)}
+  .t-spark{display:block;width:100%;height:12px;margin-top:3px;overflow:visible}
+  .t-spark .t-line{fill:none;stroke:currentColor;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.85}
+  .t-spark.up{color:#2fe07a}.t-spark.down{color:#ff6b6b}.t-spark.flat{color:var(--muted)}
+  .typing{display:flex;flex:none;align-items:center;gap:6px;color:var(--accent);font-size:12.5px;margin-top:auto;padding-top:6px}
+  .typing .dots{display:inline-flex;gap:3px}
+  .typing .dots i{width:4px;height:4px;border-radius:50%;background:currentColor;animation:dotBlink 1.4s infinite}
+  .typing .dots i:nth-child(2){animation-delay:.2s}
+  .typing .dots i:nth-child(3){animation-delay:.4s}
+  @keyframes dotBlink{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+  #feedAge{font-size:10.5px;color:var(--muted);margin-left:auto;white-space:nowrap}
+
+  .pos-card{
+    margin-top:12px;padding:12px 14px;border-radius:12px;
+    border:1px solid rgba(42,171,238,.3);
+    background:linear-gradient(160deg,rgba(42,171,238,.10),rgba(124,92,255,.07));
+  }
+  .pos-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .pos-pair{font-size:12.5px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+  .pos-side{font-size:9px;font-weight:700;letter-spacing:.8px;color:#2fe07a;background:rgba(47,224,122,.12);border:1px solid rgba(47,224,122,.3);padding:1px 6px;border-radius:999px;margin-left:5px;vertical-align:1px}
+  .pos-sim{font-size:8.5px;font-weight:700;letter-spacing:1px;color:var(--muted);border:1px solid var(--border);padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:1px;cursor:help}
+  .pos-pnl{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pos-main{display:flex;align-items:flex-end;gap:14px;margin-top:4px;min-width:0}
+  .pos-main>div{min-width:0}
+  .pos-mark{font-size:21px;font-weight:800;letter-spacing:-.6px;line-height:1.25;font-variant-numeric:tabular-nums}
+  .pos-sub{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spark{flex:1;height:34px;min-width:56px;margin-bottom:3px;overflow:visible}
+  .spark .line{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+  .spark .area{fill:currentColor;opacity:.13;stroke:none}
+  .spark .dot{fill:currentColor;animation:dotPulse 2.4s ease-in-out infinite}
+  .spark.up{color:#2fe07a}.spark.down{color:#ff6b6b}.spark.flat{color:var(--muted)}
+  @keyframes dotPulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+  .dd{margin-top:10px}
+  .dd-head{display:flex;justify-content:space-between;gap:10px;font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+  .dd-head b{font-variant-numeric:tabular-nums}
+  .dd-bar{height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:5px}
+  .dd-bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#2fe07a,#ffd60a);transition:width .45s ease,background .45s ease}
+  .dd-bar i.hot{background:linear-gradient(90deg,#ffd60a,#ff6b6b)}
+
+  .data-credit{margin-top:8px;font-size:9.5px;color:var(--muted);text-align:center}
+  .data-credit a{text-decoration:underline;text-underline-offset:2px}
+  .data-credit a:hover{color:var(--accent)}
+
+  .chat-form{
+    margin-top:12px;display:flex;align-items:center;gap:8px;
+    background:var(--bg2);border:1px solid var(--border);border-radius:999px;
+    padding:4px 4px 4px 14px;transition:border-color .2s,box-shadow .2s;
+  }
+  .chat-form:focus-within{border-color:rgba(42,171,238,.6);box-shadow:0 0 0 3px rgba(42,171,238,.10)}
+  .chat-field{
+    flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);
+    font:inherit;font-size:12.5px;padding:7px 0;
+  }
+  .chat-field::placeholder{color:var(--muted);opacity:.8}
+  .chat-field:disabled{opacity:.6;cursor:wait}
+  .chat-send{
+    flex:none;width:30px;height:30px;border-radius:50%;border:none;
+    background:var(--grad);color:#fff;font-size:15px;font-weight:800;line-height:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:transform .15s,opacity .2s;
+  }
+  .chat-send:hover{transform:translateY(-1px)}
+  .chat-send:disabled{opacity:.45;cursor:wait;transform:none}
+  @media (max-width:820px){ .chat-field{font-size:16px} }
+  @media (max-width:400px){
+    .pos-sim{display:none}
+    .pos-pnl{font-size:14px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .ticker.flash{animation:none}
+    .typing .dots i{animation:none;opacity:.6}
+    .spark .dot{animation:none}
+    .dd-bar i{transition:none}
+  }
+
+  /* trust wall */
+  .trust{position:relative;overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2);padding:80px 0}
+  .logo-wall{
+    position:absolute;inset:0;z-index:0;
+    display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:1fr;align-items:center;justify-items:center;
+    gap:10px 24px;padding:24px;
+    pointer-events:none;user-select:none;
+  }
+  .logo-wall img{
+    width:42px;height:42px;object-fit:contain;border-radius:9px;
+    filter:grayscale(1);opacity:.45;
+  }
+  .trust::before{
+    content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(ellipse 52% 58% at 50% 50%,rgba(17,20,31,.96) 0%,rgba(17,20,31,.86) 45%,rgba(17,20,31,.35) 74%,transparent 100%);
+  }
+  .trust .wrap{position:relative;z-index:2;text-align:center}
+  .trust .sec-head{margin-bottom:24px}
+  .trust h2{font-size:34px;font-weight:800;letter-spacing:-.5px;line-height:1.3}
+  .trust p{color:var(--muted);margin-top:10px;font-size:16px}
+
+  section{padding:64px 0}
+  .sec-head{text-align:center;margin-bottom:40px}
+  .sec-head .kicker{font-size:14px;color:var(--accent);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+  .sec-head h2{font-size:36px;font-weight:800;letter-spacing:-.5px}
+  .sec-head p{color:var(--muted);margin-top:12px;font-size:16px}
+
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .why{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:0 auto}
+  .feature{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:transform .15s ease,border-color .15s ease}
+  .feature:hover{transform:translateY(-4px);border-color:rgba(42,171,238,.45)}
+  .feature .ico{font-size:30px;margin-bottom:14px}
+  .feature h3{font-size:19px;margin-bottom:8px}
+  .feature p{font-size:14px;color:var(--muted)}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:step}
+  .step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;position:relative}
+  .step::before{
+    counter-increment:step;content:counter(step);
+    position:absolute;top:-16px;left:24px;width:34px;height:34px;border-radius:50%;
+    background:var(--grad);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px rgba(42,171,238,.35);
+  }
+  .step h3{font-size:18px;margin:8px 0 8px}
+  .step p{font-size:14px;color:var(--muted)}
+
+  .faq{max-width:760px;margin:0 auto}
+  .faq-item{border:1px solid var(--border);border-radius:12px;margin-bottom:12px;background:var(--card);overflow:hidden}
+  .faq-q{width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:16px;font-weight:600;padding:18px 20px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .faq-q .arr{transition:transform .2s ease;color:var(--muted)}
+  .faq-item.open .arr{transform:rotate(45deg)}
+  .faq-a{display:none;padding:0 20px 18px;color:var(--muted);font-size:15px}
+  .faq-item.open .faq-a{display:block}
+
+  .final{position:relative;overflow:hidden;text-align:center;padding:88px 0}
+  .final::before{
+    content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(ellipse 50% 60% at 50% 50%,rgba(11,13,20,.96) 0%,rgba(11,13,20,.86) 45%,rgba(11,13,20,.35) 74%,transparent 100%);
+  }
+  .final .wrap{position:relative;z-index:2}
+  .final h2{font-size:40px;font-weight:800;margin-bottom:16px}
+  .final p{color:var(--muted);margin-bottom:32px;font-size:17px}
+
+  footer{border-top:1px solid var(--border);padding:32px 0;text-align:center;color:var(--muted);font-size:13px}
+
+  @media(max-width:820px){
+    .hero h1{font-size:36px}
+    .flow{display:none}
+    .tg-mark{width:300px;opacity:.05}
+    .candles{height:80px;gap:3px;padding:0 10px}
+    .candles span{width:4px}
+    .hero-grid{grid-template-columns:1fr;gap:40px;text-align:center}
+    .hero-grid .sub{margin:0 auto 32px}
+    .hero-grid .cta-row{justify-content:center}
+    .hero-grid .chat-preview{justify-self:center}
+    .hero-grid .hint{margin-top:16px}
+    .features,.steps,.why{grid-template-columns:1fr}
+    .logo-wall{grid-template-columns:repeat(5,1fr);gap:6px 8px;padding:14px}
+    .logo-wall img{width:26px;height:26px;border-radius:6px}
+    .trust{padding:56px 0}
+    .trust h2{font-size:26px}
+    section{padding:48px 0}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo">Trade <span class="rainbow">NOW</span><span class="dot">.</span></div>
+    <a class="btn" href="https://t.me/TradeNOW" target="_blank" rel="noopener">Connect now</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true">
+    <img class="tg-mark" src="assets/telegram.svg" alt="">
+    <div class="flow">
+      <img src="assets/logos/binance.jpg" alt="" style="--sx:-560px;--sy:-180px;--d:0s">
+      <img src="assets/logos/okx.png" alt="" style="--sx:-480px;--sy:60px;--d:.45s">
+      <img src="assets/logos/bybit.png" alt="" style="--sx:-520px;--sy:200px;--d:.9s">
+      <img src="assets/logos/bitget.jpg" alt="" style="--sx:-380px;--sy:-240px;--d:1.35s">
+      <img src="assets/logos/gate.png" alt="" style="--sx:-300px;--sy:220px;--d:1.8s">
+      <img src="assets/logos/kucoin.png" alt="" style="--sx:-220px;--sy:-160px;--d:2.25s">
+      <img src="assets/logos/htx.png" alt="" style="--sx:560px;--sy:-200px;--d:2.7s">
+      <img src="assets/logos/mexc.jpg" alt="" style="--sx:500px;--sy:40px;--d:3.15s">
+      <img src="assets/logos/coinbase.png" alt="" style="--sx:520px;--sy:220px;--d:3.6s">
+      <img src="assets/logos/kraken.jpg" alt="" style="--sx:380px;--sy:-240px;--d:4.05s">
+      <img src="assets/logos/bitstamp.jpg" alt="" style="--sx:300px;--sy:240px;--d:4.5s">
+      <img src="assets/logos/gemini.png" alt="" style="--sx:200px;--sy:-180px;--d:4.95s">
+      <img src="assets/logos/crypto.jpg" alt="" style="--sx:-600px;--sy:40px;--d:5.4s">
+      <img src="assets/logos/upbit.png" alt="" style="--sx:600px;--sy:80px;--d:5.85s">
+      <img src="assets/logos/deribit.jpg" alt="" style="--sx:-420px;--sy:260px;--d:6.3s">
+      <img src="assets/logos/bingx.jpg" alt="" style="--sx:420px;--sy:260px;--d:6.75s">
+      <img src="assets/logos/phemex.png" alt="" style="--sx:-180px;--sy:260px;--d:7.2s">
+      <img src="assets/logos/lbank.png" alt="" style="--sx:180px;--sy:-260px;--d:7.65s">
+      <img src="assets/logos/bitfinex.png" alt="" style="--sx:-80px;--sy:-280px;--d:8.1s">
+      <img src="assets/logos/poloniex.png" alt="" style="--sx:80px;--sy:280px;--d:8.55s">
+    </div>
+    <div class="candles" id="candles"></div>
+  </div>
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="badge"><span class="live"></span> 24/7 Online · Native AI Quant Trading for Telegram</span>
+      <h1>Bring AI Quant Trading<br>into Your <span class="grad-text">Telegram</span></h1>
+      <p class="sub">AI quant trading for everyone. Describe a strategy in one sentence, let AI trade automatically — positions, P&amp;L and risk, all in Telegram.</p>
+      <div class="cta-row">
+        <a class="btn" href="https://t.me/TradeNOW" target="_blank" rel="noopener">🚀 Connect on Telegram</a>
+        <a class="btn ghost" href="#features">See features</a>
+      </div>
+      <p class="hint">Tapping opens Telegram — just press Start to begin</p>
+    </div>
+
+    <div class="chat-preview" id="chatPreview" role="group" aria-label="Live demo of Trade NOW inside Telegram">
+      <div class="chat-head">
+        <div class="chat-title">
+          <span class="chat-avatar" aria-hidden="true">TN</span>
+          <span>Trade NOW
+            <span class="chat-sub" id="feedStatus"><i></i><span id="feedText">Connecting to live prices…</span></span>
+          </span>
+        </div>
+        <span class="chat-live">LIVE</span>
+      </div>
+
+      <div class="tickers" id="tickers" role="group" aria-label="Live crypto prices — choose one to rebalance the demo">
+        <button type="button" class="ticker" data-id="bitcoin" aria-pressed="true" title="Rebalance demo position to BTC (mini chart: 24-hour trend)">
+          <span class="t-sym">BTC</span>
+          <span class="t-price" data-f="price">—</span>
+          <span class="t-chg flat" data-f="chg">—</span>
+          <svg class="t-spark flat" viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden="true"><path class="t-line" d=""></path></svg>
+        </button>
+        <button type="button" class="ticker" data-id="ethereum" aria-pressed="false" title="Rebalance demo position to ETH (mini chart: 24-hour trend)">
+          <span class="t-sym">ETH</span>
+          <span class="t-price" data-f="price">—</span>
+          <span class="t-chg flat" data-f="chg">—</span>
+          <svg class="t-spark flat" viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden="true"><path class="t-line" d=""></path></svg>
+        </button>
+        <button type="button" class="ticker" data-id="solana" aria-pressed="false" title="Rebalance demo position to SOL (mini chart: 24-hour trend)">
+          <span class="t-sym">SOL</span>
+          <span class="t-price" data-f="price">—</span>
+          <span class="t-chg flat" data-f="chg">—</span>
+          <svg class="t-spark flat" viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden="true"><path class="t-line" d=""></path></svg>
+        </button>
+      </div>
+
+      <div class="chat-window">
+        <div class="chat-body" id="chatBody" aria-live="polite">
+          <div class="bubble user">Build me a <b>BTC</b> perp strategy with max drawdown under 8%</div>
+          <div class="bubble ai">✅ Strategy ready. Backtest max drawdown <b>7.4%</b>. Launch it?</div>
+          <div class="bubble user">Launch with 20% position size</div>
+          <div class="bubble ai">🚀 Trading. Tap a coin, or type a strategy below to run a simulation.</div>
+          <div class="typing" id="typingRow">
+            <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span id="typingText">Strategy running</span>
+            <span id="feedAge">·</span>
+          </div>
+        </div>
+      </div>
+
+      <form class="chat-form" id="chatForm">
+        <input id="chatInput" class="chat-field" type="text" maxlength="120" autocomplete="off" enterkeyhint="send"
+               aria-label="Describe a trading strategy to simulate"
+               placeholder="Describe a strategy — e.g. BTC grid, 5% drawdown">
+        <button type="submit" class="chat-send" id="chatSend" aria-label="Run simulated strategy">↑</button>
+      </form>
+
+      <div class="pos-card" id="posCard">
+        <div class="pos-top">
+          <div class="pos-pair">
+            <span id="posSym">BTC</span>-PERP
+            <span class="pos-side">LONG</span>
+            <span class="pos-sim" title="Simulated $2,000 notional at 1×, marked to live CoinGecko prices. Demo only — not financial advice.">SIM</span>
+          </div>
+          <div class="pos-pnl flat" id="posPnl">—</div>
+        </div>
+        <div class="pos-main">
+          <div>
+            <div class="pos-mark" id="posMark">—</div>
+            <div class="pos-sub">Entry <span id="posEntry">—</span> · <span id="posSize">20%</span> · <span id="posNotional">$2,000</span> · <span id="posLev">1×</span></div>
+          </div>
+          <svg class="spark flat" id="spark" viewBox="0 0 120 34" preserveAspectRatio="none" aria-hidden="true">
+            <path class="area" id="sparkArea" d=""></path>
+            <path class="line" id="sparkLine" d=""></path>
+            <circle class="dot" id="sparkDot" cx="-10" cy="-10" r="2.5"></circle>
+          </svg>
+        </div>
+        <div class="dd">
+          <div class="dd-head"><span>Drawdown guard</span><b id="ddText">0.00% / 8.00%</b></div>
+          <div class="dd-bar"><i id="ddFill"></i></div>
+        </div>
+      </div>
+
+      <div class="data-credit">Prices by <a href="https://www.coingecko.com" target="_blank" rel="noopener">CoinGecko</a> · simulated demo, not financial advice</div>
+    </div>
+  </div>
+</section>
+
+<section class="trust" id="trust">
+  <div class="logo-wall" aria-hidden="true">
+    <img src="assets/logos/binance.jpg" alt="">
+    <img src="assets/logos/okx.png" alt="">
+    <img src="assets/logos/bybit.png" alt="">
+    <img src="assets/logos/bitget.jpg" alt="">
+    <img src="assets/logos/gate.png" alt="">
+    <img src="assets/logos/kucoin.png" alt="">
+    <img src="assets/logos/htx.png" alt="">
+    <img src="assets/logos/mexc.jpg" alt="">
+    <img src="assets/logos/coinbase.png" alt="">
+    <img src="assets/logos/kraken.jpg" alt="">
+    <img src="assets/logos/bitstamp.jpg" alt="">
+    <img src="assets/logos/gemini.png" alt="">
+    <img src="assets/logos/crypto.jpg" alt="">
+    <img src="assets/logos/upbit.png" alt="">
+    <img src="assets/logos/deribit.jpg" alt="">
+    <img src="assets/logos/bingx.jpg" alt="">
+    <img src="assets/logos/phemex.png" alt="">
+    <img src="assets/logos/lbank.png" alt="">
+    <img src="assets/logos/bitfinex.png" alt="">
+    <img src="assets/logos/poloniex.png" alt="">
+  </div>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Trusted by traders</div>
+      <h2>100K+ traders already let Trade NOW trade for them</h2>
+      <p>1,000+ strategy templates · 7×24 automated trading · &lt;1s order execution</p>
+    </div>
+    <a class="btn" href="https://t.me/TradeNOW" target="_blank" rel="noopener">🚀 Start free</a>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Features</div>
+      <h2>AI quant trading, right inside Telegram</h2>
+      <p>From strategy generation to live execution — all in one chat</p>
+    </div>
+    <div class="features">
+      <div class="feature"><div class="ico">🧠</div><h3>AI strategy engine</h3><p>Describe an idea in one sentence; get a backtested, executable strategy.</p></div>
+      <div class="feature"><div class="ico">📈</div><h3>Backtesting</h3><p>Validate returns and max drawdown on historical data before going live.</p></div>
+      <div class="feature"><div class="ico">🤖</div><h3>Auto trading</h3><p>Entries, rebalancing and exits run 24/7 — no screen-watching.</p></div>
+      <div class="feature"><div class="ico">📊</div><h3>Live markets &amp; positions</h3><p>Check prices, positions and P&amp;L anytime in Telegram.</p></div>
+      <div class="feature"><div class="ico">⚙️</div><h3>Tune anytime</h3><p>Start, pause, resize or switch strategies with a message.</p></div>
+      <div class="feature"><div class="ico">🛡️</div><h3>Risk controls &amp; alerts</h3><p>Stops, drawdown caps and real-time alerts protect your capital.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how" style="background:var(--bg2)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">How it works</div>
+      <h2>Three steps to automated trading</h2>
+      <p>No app to download — everything happens in Telegram</p>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Connect the bot</h3><p>Open Telegram and press Start.</p></div>
+      <div class="step"><h3>Link your exchange</h3><p>Trading-only API, withdrawals disabled. Funds stay in your account.</p></div>
+      <div class="step"><h3>Set a strategy</h3><p>Describe your goal; AI trades and reports.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Why Telegram</div>
+      <h2>Trading doesn't need a desk</h2>
+      <p>Lighter than a web platform, faster than a trading app</p>
+    </div>
+    <div class="why">
+      <div class="feature"><div class="ico">📱</div><h3>Always with you</h3><p>Phone, tablet or desktop — manage strategies right in Telegram.</p></div>
+      <div class="feature"><div class="ico">💬</div><h3>Chat is the UI</h3><p>No complex dashboard; just ask, tweak and pause in plain language.</p></div>
+      <div class="feature"><div class="ico">🔐</div><h3>Your funds stay yours</h3><p>Trading-only API with withdrawals disabled; funds remain in your exchange account.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="background:var(--bg2)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">FAQ</div>
+      <h2>Frequently asked</h2>
+    </div>
+    <div class="faq">
+      <div class="faq-item">
+        <button class="faq-q">Is it free?<span class="arr">+</span></button>
+        <div class="faq-a">Core features are free. Strategy limits and plans are listed inside the bot.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Is my money safe?<span class="arr">+</span></button>
+        <div class="faq-a">Funds stay in your exchange account. The API key is trading-only, withdrawals disabled, and revocable anytime.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Which exchanges are supported?<span class="arr">+</span></button>
+        <div class="faq-a">Binance, OKX, Bybit, Bitget, Gate.io and KuCoin — spot and futures markets.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Does AI trading guarantee profits?<span class="arr">+</span></button>
+        <div class="faq-a">No. Quant strategies carry risk. Manage position size and set stop-losses.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="logo-wall" aria-hidden="true">
+    <img src="assets/logos/binance.jpg" alt="">
+    <img src="assets/logos/okx.png" alt="">
+    <img src="assets/logos/bybit.png" alt="">
+    <img src="assets/logos/bitget.jpg" alt="">
+    <img src="assets/logos/gate.png" alt="">
+    <img src="assets/logos/kucoin.png" alt="">
+    <img src="assets/logos/htx.png" alt="">
+    <img src="assets/logos/mexc.jpg" alt="">
+    <img src="assets/logos/coinbase.png" alt="">
+    <img src="assets/logos/kraken.jpg" alt="">
+    <img src="assets/logos/bitstamp.jpg" alt="">
+    <img src="assets/logos/gemini.png" alt="">
+    <img src="assets/logos/crypto.jpg" alt="">
+    <img src="assets/logos/upbit.png" alt="">
+    <img src="assets/logos/deribit.jpg" alt="">
+    <img src="assets/logos/bingx.jpg" alt="">
+    <img src="assets/logos/phemex.png" alt="">
+    <img src="assets/logos/lbank.png" alt="">
+    <img src="assets/logos/bitfinex.png" alt="">
+    <img src="assets/logos/poloniex.png" alt="">
+  </div>
+  <div class="wrap">
+    <h2>Ready to let AI watch the markets for you?</h2>
+    <p>Connect in 30 seconds and experience AI quant trading inside Telegram.</p>
+    <a class="btn" href="https://t.me/TradeNOW" target="_blank" rel="noopener">🚀 Connect on Telegram</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">© 2026 Trade NOW · The AI quant trading assistant that lives in your Telegram</div>
+</footer>
+
+<script>
+  (function(){
+    var box=document.getElementById('candles');
+    if(!box) return;
+    var n=window.innerWidth<820?24:48;
+    for(var i=0;i<n;i++){
+      var s=document.createElement('span');
+      s.style.setProperty('--h',(18+Math.random()*82)+'%');
+      if(Math.random()<.45) s.className='down';
+      box.appendChild(s);
+    }
+  })();
+  document.querySelectorAll('.faq-q').forEach(function(q){
+    q.addEventListener('click',function(){
+      var item=q.parentElement;
+      item.classList.toggle('open');
+    });
+  });
+
+  /* ---- Live demo: real prices (CoinGecko) + interactive chat preview ---- */
+  (function(){
+    var root=document.getElementById('chatPreview');
+    if(!root) return;
+
+    // One request gives price, 24h change and a real 7-day sparkline for all three coins.
+    var API='https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana&sparkline=true&price_change_percentage=24h&per_page=3&page=1';
+    var POLL=30000;            // CoinGecko caches this endpoint for 30s and the free tier is rate-limited
+    var CACHE_KEY='tn-spot-v1';
+    var CACHE_TTL=10*60*1000;
+    var EQUITY=10000;          // simulated paper account
+    var DEFAULT_SIZE=20;       // % of equity per strategy
+    var DEFAULT_LEV=1;
+    var DD_CAP=8;              // max drawdown guard, in %
+    var COINS={bitcoin:'BTC',ethereum:'ETH',solana:'SOL'};
+
+    var tickersEl=document.getElementById('tickers');
+    var chatBody=document.getElementById('chatBody');
+    var typingRow=document.getElementById('typingRow');
+    var feedStatus=document.getElementById('feedStatus');
+    var feedText=document.getElementById('feedText');
+    var feedAge=document.getElementById('feedAge');
+    var posSym=document.getElementById('posSym');
+    var posMark=document.getElementById('posMark');
+    var posEntry=document.getElementById('posEntry');
+    var posSize=document.getElementById('posSize');
+    var posNotional=document.getElementById('posNotional');
+    var posLev=document.getElementById('posLev');
+    var posPnl=document.getElementById('posPnl');
+    var ddText=document.getElementById('ddText');
+    var ddFill=document.getElementById('ddFill');
+    var spark=document.getElementById('spark');
+    var sparkLine=document.getElementById('sparkLine');
+    var sparkArea=document.getElementById('sparkArea');
+    var sparkDot=document.getElementById('sparkDot');
+    var typingText=document.getElementById('typingText');
+    var chatForm=document.getElementById('chatForm');
+    var chatInput=document.getElementById('chatInput');
+    var chatSend=document.getElementById('chatSend');
+
+    var state={
+      active:'bitcoin', data:null, prev:null, updatedAt:0,
+      history:{bitcoin:[],ethereum:[],solana:[]},
+      entry:null, peak:null, pnlClass:'flat',
+      size:20, lev:1, ddCap:DD_CAP, thinking:false,
+      delay:POLL, timer:null
+    };
+
+    function fmtPrice(p){
+      if(typeof p!=='number'||!isFinite(p)) return '—';
+      var d=p>=10000?0:2;
+      return '$'+p.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+    }
+    function fmtPct(v){
+      if(typeof v!=='number'||!isFinite(v)) return '—';
+      return (v>0?'+':'')+v.toFixed(2)+'%';
+    }
+    function fmtUsd(v){
+      v=Math.abs(v)<0.005?0:v;
+      return (v<0?'-$':'$')+Math.abs(v).toFixed(2);
+    }
+    function fmtMoney0(v){ return '$'+Math.round(v).toLocaleString('en-US'); }
+    function escHtml(s){
+      return String(s).replace(/[&<>"']/g,function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+    function fmtTime(t){
+      try{ return new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+      catch(e){ return ''; }
+    }
+    function setStatus(text,err){
+      feedText.textContent=text;
+      feedStatus.classList.toggle('err',!!err);
+    }
+    function readCache(){
+      try{
+        var raw=localStorage.getItem(CACHE_KEY);
+        if(!raw) return null;
+        var c=JSON.parse(raw);
+        if(!c||!c.t||!c.data||!c.data.bitcoin) return null;
+        return c;
+      }catch(e){ return null; }
+    }
+    function writeCache(data){
+      try{ localStorage.setItem(CACHE_KEY,JSON.stringify({t:Date.now(),data:data})); }catch(e){}
+    }
+
+    function pushPoint(id,price){
+      var h=state.history[id];
+      if(!h) return;
+      h.push({t:Date.now(),p:price});
+      if(h.length>80) h.shift();
+    }
+
+    // /coins/markets returns an array; fold it into the shape the card expects.
+    function normalize(arr){
+      var out={};
+      for(var i=0;i<arr.length;i++){
+        var c=arr[i];
+        if(!c||!COINS[c.id]) continue;
+        out[c.id]={
+          usd:c.current_price,
+          usd_24h_change:typeof c.price_change_percentage_24h==='number'?c.price_change_percentage_24h:null,
+          spark:c.sparkline_in_7d&&c.sparkline_in_7d.price?c.sparkline_in_7d.price:[]
+        };
+      }
+      return out;
+    }
+
+    function drawChipSpark(btn,arr){
+      var path=btn.querySelector('.t-line');
+      if(!path) return;
+      if(!arr||arr.length<2){
+        path.setAttribute('d','');
+        return;
+      }
+
+      // The series is hourly for 7 days; the last 25 points are the last 24 hours,
+      // so the line matches the 24h change printed beside it.
+      var series=arr.length>25?arr.slice(-25):arr;
+
+      var W=100,H=14,P=1.5,N=40,vals=[],i,v;
+      var step=(series.length-1)/(N-1);
+      var min=Infinity,max=-Infinity;
+      for(i=0;i<N;i++){
+        v=series[Math.round(i*step)];
+        vals.push(v);
+        if(v<min) min=v;
+        if(v>max) max=v;
+      }
+      if(max-min<1e-9){ max=min+1; min=min-1; }
+
+      var pts=[];
+      for(i=0;i<N;i++){
+        var x=P+(W-2*P)*i/(N-1);
+        var y=H-P-(vals[i]-min)/(max-min)*(H-2*P);
+        pts.push(x.toFixed(2)+' '+y.toFixed(2));
+      }
+      path.setAttribute('d','M'+pts.join(' L'));
+
+      var delta=(vals[N-1]-vals[0])/vals[0]*100;
+      path.parentNode.setAttribute('class','t-spark '+(delta>0.05?'up':delta<-0.05?'down':'flat'));
+    }
+
+    function renderTickers(flash){
+      if(!state.data) return;
+      var btns=tickersEl.querySelectorAll('.ticker');
+      for(var i=0;i<btns.length;i++){
+        var btn=btns[i];
+        var id=btn.getAttribute('data-id');
+        var d=state.data[id];
+        if(!d) continue;
+        var priceEl=btn.querySelector('[data-f="price"]');
+        var chgEl=btn.querySelector('[data-f="chg"]');
+        var prev=state.prev&&state.prev[id]?state.prev[id].usd:null;
+
+        priceEl.textContent=fmtPrice(d.usd);
+        if(flash&&prev!==null&&prev!==d.usd){
+          btn.classList.remove('flash');
+          void btn.offsetWidth;
+          btn.classList.add('flash');
+        }
+
+        var chg=d.usd_24h_change;
+        chgEl.textContent=fmtPct(chg);
+        chgEl.className='t-chg '+(typeof chg==='number'?(chg>0.005?'up':chg<-0.005?'down':'flat'):'flat');
+        drawChipSpark(btn,d.spark);
+
+        var on=id===state.active;
+        var changeText=typeof chg==='number'
+          ? (chg>=0?'up ':'down ')+Math.abs(chg).toFixed(2)+'% over 24 hours. '
+          : '24-hour change unavailable. ';
+        btn.setAttribute('aria-pressed',on?'true':'false');
+        btn.setAttribute('aria-label',
+          COINS[id]+' '+fmtPrice(d.usd)+', '+changeText+
+          (on?'Current demo position.':'Tap to rebalance the demo to '+COINS[id]+'.'));
+      }
+    }
+
+    function drawSpark(){
+      var h=state.history[state.active]||[];
+      var W=120,H=34,P=4;
+      spark.className='spark '+state.pnlClass;
+
+      if(!h.length){
+        sparkLine.setAttribute('d','');
+        sparkArea.setAttribute('d','');
+        sparkDot.setAttribute('cx','-10');
+        sparkDot.setAttribute('cy','-10');
+        return;
+      }
+
+      var n=h.length,i,min=Infinity,max=-Infinity;
+      for(i=0;i<n;i++){ if(h[i].p<min) min=h[i].p; if(h[i].p>max) max=h[i].p; }
+
+      var d,area,lastX,lastY;
+      if(n===1||max-min<1e-9){
+        var y=(H/2).toFixed(2);
+        d='M'+P+' '+y+' L'+(W-P)+' '+y;
+        area=d+' L'+(W-P)+' '+H+' L'+P+' '+H+' Z';
+        lastX=W-P; lastY=H/2;
+      }else{
+        var span=max-min,pts=[];
+        for(i=0;i<n;i++){
+          var x=P+(W-2*P)*i/(n-1);
+          var yy=H-P-(h[i].p-min)/span*(H-2*P);
+          pts.push(x.toFixed(2)+' '+yy.toFixed(2));
+        }
+        d='M'+pts.join(' L');
+        area=d+' L'+(W-P).toFixed(2)+' '+H+' L'+P+' '+H+' Z';
+        var last=pts[pts.length-1].split(' ');
+        lastX=last[0]; lastY=last[1];
+      }
+
+      sparkLine.setAttribute('d',d);
+      sparkArea.setAttribute('d',area);
+      sparkDot.setAttribute('cx',lastX);
+      sparkDot.setAttribute('cy',lastY);
+    }
+
+    function scrollChat(){
+      requestAnimationFrame(function(){ chatBody.scrollTop=chatBody.scrollHeight; });
+    }
+
+    function pushBubble(kind,html){
+      var b=document.createElement('div');
+      b.className='bubble'+(kind==='ai'?' ai':' user');
+      b.innerHTML=html;
+
+      chatBody.insertBefore(b,typingRow);
+
+      var bubbles=chatBody.querySelectorAll('.bubble');
+      while(bubbles.length>10){
+        bubbles[0].remove();
+        bubbles=chatBody.querySelectorAll('.bubble');
+      }
+    }
+
+    function updatePosition(){
+      var d=state.data&&state.data[state.active];
+      if(!d) return;
+
+      var price=d.usd;
+      if(state.entry==null){ state.entry=price; state.peak=price; }
+      if(price>state.peak) state.peak=price;
+
+      // Loss is measured against margin, so leverage scales drawdown too.
+      var ddPrice=(state.peak-price)/state.peak*100;
+      var dd=ddPrice*state.lev;
+      if(dd>=state.ddCap){
+        // The risk control in the story is real logic here: reset the simulated position.
+        state.entry=price;
+        state.peak=price;
+        dd=0;
+        pushBubble('ai','🛡 Drawdown guard hit '+state.ddCap+'% — demo position auto-reset at '+fmtPrice(price)+'.');
+        scrollChat();
+      }
+
+      var notional=EQUITY*state.size/100*state.lev;
+      var pnlPctPrice=(price-state.entry)/state.entry*100;
+      var pnlPctMargin=pnlPctPrice*state.lev;
+      var pnlUsd=notional*pnlPctPrice/100;
+      var cls=pnlUsd>0.005?'up':pnlUsd<-0.005?'down':'flat';
+      state.pnlClass=cls;
+
+      posSym.textContent=COINS[state.active];
+      posMark.textContent=fmtPrice(price);
+      posEntry.textContent=fmtPrice(state.entry);
+      posSize.textContent=state.size+'%';
+      posNotional.textContent=fmtMoney0(notional);
+      posLev.textContent=state.lev+'×';
+      posPnl.textContent=(pnlUsd>0?'+':'')+fmtUsd(pnlUsd)+' · '+fmtPct(pnlPctMargin);
+      posPnl.className='pos-pnl '+cls;
+      ddText.textContent=dd.toFixed(2)+'% / '+state.ddCap.toFixed(2)+'%';
+      ddFill.style.width=Math.min(100,dd/state.ddCap*100)+'%';
+      ddFill.classList.toggle('hot',dd>=state.ddCap*0.6);
+
+      drawSpark();
+    }
+
+    function applyData(data,t,mode){
+      if(!data||!data.bitcoin) return;
+
+      state.prev=state.data;
+      state.data=data;
+      state.updatedAt=t;
+      if(mode==='live') writeCache(data);
+
+      renderTickers(mode==='live');
+      for(var id in COINS){
+        if(data[id]&&typeof data[id].usd==='number') pushPoint(id,data[id].usd);
+      }
+
+      if(state.entry==null){
+        state.entry=data[state.active].usd;
+        state.peak=state.entry;
+      }
+      updatePosition();
+
+      feedAge.textContent='updated '+fmtTime(t);
+      if(mode==='live') setStatus('Live · CoinGecko',false);
+      else setStatus('Cached · '+fmtTime(t),true);
+    }
+
+    function schedule(ms){
+      clearTimeout(state.timer);
+      state.timer=setTimeout(function(){ fetchPrices(false); },ms);
+    }
+
+    async function fetchPrices(initial){
+      if(!initial&&document.hidden) return;
+
+      var ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+      var to=setTimeout(function(){ if(ctrl) ctrl.abort(); },10000);
+
+      try{
+        var res=await fetch(API,ctrl?{signal:ctrl.signal}:{});
+        if(res.status===429) throw new Error('rate-limited');
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        var json=await res.json();
+        if(!Array.isArray(json)) throw new Error('unexpected payload');
+        var data=normalize(json);
+        if(!data.bitcoin) throw new Error('unexpected payload');
+
+        applyData(data,Date.now(),'live');
+        state.delay=POLL;
+      }catch(err){
+        var cached=readCache();
+        if(!state.data&&cached&&Date.now()-cached.t<CACHE_TTL){
+          applyData(cached.data,cached.t,'cache');
+        }else if(state.data){
+          setStatus('Reconnecting · last '+fmtTime(state.updatedAt),true);
+        }else{
+          setStatus('Live feed unavailable · retrying',true);
+        }
+        state.delay=Math.min((state.delay||POLL)*2,120000);
+      }finally{
+        clearTimeout(to);
+        schedule(state.delay);
+      }
+    }
+
+    function selectCoin(id){
+      if(!state.data||!state.data[id]||!COINS[id]) return;
+
+      var price=state.data[id].usd;
+      var sym=COINS[id];
+      var same=id===state.active;
+
+      state.active=id;
+      state.entry=price;
+      state.peak=price;
+      renderTickers(false);
+
+      if(same){
+        pushBubble('ai','🔄 Demo entry reset to '+fmtPrice(price)+'. The '+state.ddCap+'% drawdown guard is re-armed.');
+      }else{
+        pushBubble('user','Rebalance to '+sym+'-PERP');
+        pushBubble('ai','✅ '+state.size+'% allocated to '+sym+'-PERP at '+fmtPrice(price)+' ('+state.lev+'×). Drawdown guard armed at '+state.ddCap+'%.');
+      }
+      updatePosition();
+      scrollChat();
+    }
+
+    /* ---- visitor-typed strategies, run as a simulation ---- */
+    function setTyping(text){ typingText.textContent=text; }
+
+    function seriesStats(series){
+      if(!series||series.length<2) return null;
+      var peak=-Infinity,mdd=0,prev=null,rets=[],i;
+      for(i=0;i<series.length;i++){
+        var p=series[i];
+        if(p>peak) peak=p;
+        var d=(peak-p)/peak*100;
+        if(d>mdd) mdd=d;
+        if(prev!==null&&prev>0) rets.push((p/prev-1)*100);
+        prev=p;
+      }
+      var mean=0,j;
+      for(j=0;j<rets.length;j++) mean+=rets[j];
+      mean=rets.length?mean/rets.length:0;
+      var variance=0;
+      for(j=0;j<rets.length;j++){ var diff=rets[j]-mean; variance+=diff*diff; }
+      variance=rets.length?variance/rets.length:0;
+      return {dd:mdd,vol:Math.sqrt(variance)};
+    }
+
+    function detectCoin(text){
+      if(/\b(btc|bitcoin)\b|比特币/i.test(text)) return 'bitcoin';
+      if(/\b(eth|ethereum)\b|以太坊?/i.test(text)) return 'ethereum';
+      if(/\b(sol|solana)\b|索拉纳/i.test(text)) return 'solana';
+      return state.active;
+    }
+    function detectStrategy(text){
+      if(/grid|网格/i.test(text)) return 'Grid';
+      if(/breakout|突破/i.test(text)) return 'Breakout';
+      if(/mean[\s-]?revers|reversion|均值|回归/i.test(text)) return 'Mean reversion';
+      if(/trend|趋势|动量|momentum/i.test(text)) return 'Trend';
+      if(/dca|定投|scale[\s-]in/i.test(text)) return 'DCA';
+      return 'AI';
+    }
+    function detectRisk(text){
+      var m=text.match(/(\d{1,2}(?:\.\d+)?)\s*%\s*(?:max(?:imum)?\s*)?(?:drawdown|dd|回撤)/i)
+          || text.match(/(?:max(?:imum)?\s*)?(?:drawdown|dd|回撤)[^\d]{0,12}(\d{1,2}(?:\.\d+)?)\s*%/i);
+      return m?clamp(+m[1],2,15):DD_CAP;
+    }
+    function detectSize(text){
+      var m=text.match(/(\d{1,2}(?:\.\d+)?)\s*%\s*(?:of\s*)?(?:position|size|仓位|资金)/i)
+          || text.match(/(?:position|size|仓位|资金)[^\d]{0,10}(\d{1,2}(?:\.\d+)?)\s*%/i);
+      return m?clamp(+m[1],10,50):DEFAULT_SIZE;
+    }
+    function detectLeverage(text){
+      var m=text.match(/(\d)\s*[x×]/i) || text.match(/(?:lev(?:erage)?|杠杆)\s*(\d)/i);
+      return m?clamp(+m[1],1,3):DEFAULT_LEV;
+    }
+
+    function runSimulatedStrategy(text){
+      var coin=detectCoin(text);
+      var sym=COINS[coin];
+      var d=state.data&&state.data[coin];
+
+      if(!d||typeof d.usd!=='number'){
+        pushBubble('ai','⏳ Live prices are still loading — try again in a few seconds.');
+        setTyping('Strategy running');
+        scrollChat();
+        return;
+      }
+
+      var size=detectSize(text);
+      var lev=detectLeverage(text);
+      var cap=detectRisk(text);
+      var strat=detectStrategy(text);
+      var series=d.spark&&d.spark.length>25?d.spark.slice(-25):d.spark;
+      var stats=seriesStats(series);
+
+      state.size=size;
+      state.lev=lev;
+      state.ddCap=cap;
+      state.active=coin;
+      state.entry=d.usd;
+      state.peak=d.usd;
+      renderTickers(false);
+      updatePosition();
+      setTyping('Simulated strategy running');
+
+      var msg='✅ Simulated '+(strat==='AI'?'custom':strat)+' strategy on '+sym+'-PERP. 24h max drawdown '+
+              (stats?stats.dd.toFixed(2)+'%':'n/a')+', vol '+(stats?stats.vol.toFixed(2)+'%':'n/a')+'. '+
+              'Allocation '+size+'% at '+lev+'× — guard '+cap+'%. Running on live prices.';
+      if(stats&&stats.dd*lev>=cap){
+        msg+=' ⚠️ At this leverage the last 24h drawdown would have hit the guard.';
+      }
+      pushBubble('ai',msg);
+      scrollChat();
+    }
+
+    function submitPrompt(){
+      if(state.thinking) return;
+      var text=(chatInput.value||'').trim();
+      if(!text) return;
+
+      state.thinking=true;
+      pushBubble('user',escHtml(text));
+      scrollChat();
+      setTyping('Analyzing live markets');
+      chatInput.value='';
+      chatInput.disabled=true;
+      chatSend.disabled=true;
+
+      setTimeout(function(){
+        runSimulatedStrategy(text);
+        state.thinking=false;
+        chatInput.disabled=false;
+        chatSend.disabled=false;
+        try{
+          // Don't pop the mobile keyboard after the answer lands.
+          if(!matchMedia('(pointer: coarse)').matches) chatInput.focus();
+        }catch(e){}
+        scrollChat();
+      },1100);
+    }
+
+    chatForm.addEventListener('submit',function(e){
+      e.preventDefault();
+      submitPrompt();
+    });
+
+    tickersEl.addEventListener('click',function(e){
+      var btn=e.target.closest?e.target.closest('.ticker'):null;
+      if(!btn||!tickersEl.contains(btn)) return;
+      selectCoin(btn.getAttribute('data-id'));
+    });
+
+    chatBody.addEventListener('scroll',function(){
+      chatBody.parentElement.classList.toggle('fade-top',chatBody.scrollTop>4);
+    });
+
+    document.addEventListener('visibilitychange',function(){
+      if(document.hidden){
+        clearTimeout(state.timer);
+      }else{
+        var age=Date.now()-state.updatedAt;
+        if(age>POLL) fetchPrices(false);
+        else schedule(POLL-age+500);
+      }
+    });
+    window.addEventListener('online',function(){ fetchPrices(false); });
+
+    // Boot: reuse a very fresh cached response so reloads don't burn the rate limit.
+    var cached=readCache();
+    if(cached&&Date.now()-cached.t<CACHE_TTL){
+      var fresh=Date.now()-cached.t<POLL;
+      applyData(cached.data,cached.t,fresh?'live':'cache');
+      if(fresh) schedule(POLL-(Date.now()-cached.t)+500);
+      else fetchPrices(false);
+    }else{
+      fetchPrices(true);
+    }
+  })();
+</script>
+</body>
+</html>

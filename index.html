@@ -518,6 +518,14 @@
 
   var INAPP = !!APP;
 
+  /* iOS 进页自动点一次主按钮（实测有效，客户零点击进 Safari）。
+     ?auto=0 关掉；用户点过「关闭 / 继续在应用内浏览」后本次会话内不再自动弹。 */
+  var AUTO = true;
+  if (/[?&]auto=0/.test(location.search)) AUTO = false;
+  if (/[?&]auto=1/.test(location.search)) AUTO = true;
+  try { if (sessionStorage.getItem('xbStay') === '1' && !/[?&]auto=1/.test(location.search)) AUTO = false; } catch (e) {}
+  function markStay() { try { sessionStorage.setItem('xbStay', '1'); } catch (e) {} }
+
   /* ---------- 4. 带上当前完整 hash，不假设站内路由格式 ---------- */
   function curHash() {
     var h = location.hash || '';
@@ -600,18 +608,20 @@
   function show() { if (!forcedStay) box.classList.add('on'); }
   function hide() { box.classList.remove('on'); }
 
-  /* ---------- 6. iOS：实测 SFSafariViewController 里 x-safari-https 需一次点击；
-       用 ?auto=1 可以做「进页即自动点」的实验（成功就进 Safari，失败则只剩遮罩） ---------- */
+  /* ---------- 6. iOS：进页自动点一次主按钮 = 零点击进 Safari（已实测有效）；
+        没跳走就把遮罩亮出来兜底，并给「⋯ → 在 Safari 中打开 / 复制链接」 ---------- */
   if (INAPP && isIOS) {
-    var delay = FORCE ? 60 : 350;
-    setTimeout(show, delay);
-    if (/[?&]auto=1/.test(location.search)) {
+    var delay = FORCE ? 60 : 300;
+    if (AUTO) {
       setTimeout(function () {
+        if (forcedStay) return;
         try { cta.click(); } catch (e) {
           try { location.href = cta.href; } catch (e2) {}
         }
-      }, delay + 150);
-      setTimeout(function () { if (document.hidden) hide(); }, delay + 1600);
+      }, 120);
+      setTimeout(function () { if (!document.hidden) show(); }, delay + 900);
+    } else {
+      setTimeout(show, delay);
     }
   }
 
@@ -633,8 +643,8 @@
     }, 1600);
   });
 
-  if (skipBtn) skipBtn.addEventListener('click', hide);
-  if (closeBtn) closeBtn.addEventListener('click', hide);
+  if (skipBtn) skipBtn.addEventListener('click', function () { markStay(); hide(); });
+  if (closeBtn) closeBtn.addEventListener('click', function () { markStay(); hide(); });
 
   if (copyBtn) copyBtn.addEventListener('click', function () {
     var t = targetURL();
@@ -663,6 +673,8 @@
   }
 })();
 </script>
+
+
 
 
 
